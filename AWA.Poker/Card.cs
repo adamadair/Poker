@@ -11,20 +11,12 @@ namespace AWA.Poker
     public class Card
     {
         private CardSuit suit;
-        private CardRank rank;
+        private CardValue value;
 
-        public Card (CardSuit cs, CardRank cr)
+        public Card (CardSuit cs, CardValue cr)
         {
-            if (cs == CardSuit.None && cr != CardRank.Joker)
-            {
-                throw new PokerException("Card intialization error! A rank of " + cr.ToString() + " requires a proper suit.");
-            }
             suit = cs;
-            rank = cr;
-            if (rank == CardRank.Joker)
-            {
-                this.suit = CardSuit.None;
-            }
+            value = cr;
         }
 
         /// <summary>
@@ -45,7 +37,7 @@ namespace AWA.Poker
         }
 
         public CardSuit Suit{get{ return this.suit; }}
-        public CardRank Rank{get{ return this.rank; }}
+        public CardValue Value{get{ return this.value; }}
 
         /// <summary>
         /// Sets the card values from an input string. 
@@ -55,52 +47,48 @@ namespace AWA.Poker
         {
             if(val.Length!=2)
                 throw new PokerException("Incorrect length for card string. Must be 2 characters.");
-            if(val=="JJ"){
-                suit=CardSuit.None;
-                rank= CardRank.Joker;
-            }
             var cr = val.Substring(0,1).ToUpper();
             var cs = val.Substring(1,1).ToUpper();
             switch (cr)
             {
                 case "2": 
-                    this.rank = CardRank.Two;
+                    this.value = CardValue.Two;
                     break;
                 case "3":
-                    this.rank = CardRank.Three;
+                    this.value = CardValue.Three;
                     break;
                 case "4":
-                    this.rank = CardRank.Four;
+                    this.value = CardValue.Four;
                     break;
                 case "5":
-                    this.rank = CardRank.Five;
+                    this.value = CardValue.Five;
                     break;
                 case "6":
-                    this.rank = CardRank.Six;
+                    this.value = CardValue.Six;
                     break;
                 case "7":
-                    this.rank = CardRank.Seven;
+                    this.value = CardValue.Seven;
                     break;
                 case "8":
-                    this.rank = CardRank.Eight;
+                    this.value = CardValue.Eight;
                     break;
                 case "9":
-                    this.rank = CardRank.Nine;
+                    this.value = CardValue.Nine;
                     break;
                 case "T":
-                    this.rank = CardRank.Ten;
+                    this.value = CardValue.Ten;
                     break;
                 case "J":
-                    this.rank = CardRank.Jack;
+                    this.value = CardValue.Jack;
                     break;
                 case "Q":
-                    this.rank = CardRank.Queen;
+                    this.value = CardValue.Queen;
                     break;
                 case "K":
-                    this.rank = CardRank.King;
+                    this.value = CardValue.King;
                     break;
                 case "A": 
-                    this.rank = CardRank.Ace;
+                    this.value = CardValue.Ace;
                     break;
                 default:
                     throw new PokerException(cr + " is an invalid card rank.");
@@ -131,9 +119,7 @@ namespace AWA.Poker
         /// <returns>The long string.</returns>
         public string ToLongString()
         {
-            if (Rank == CardRank.Joker)
-                return"Joker";
-            return string.Format ("{1} of {0}", Suit.ToString(), Rank.ToString());  
+            return string.Format ("{1} of {0}", Suit.ToString(), Value.ToString());  
         }
 
         /// <summary>
@@ -148,49 +134,47 @@ namespace AWA.Poker
         /// </summary>
         /// <returns>A <see cref="System.String"/> that represents the current <see cref="AWA.Poker.Card"/>.</returns>
         public override string ToString ()
-        {
-            if (Rank == CardRank.Joker)
-                return "JJ";
+        {            
             StringBuilder sb = new StringBuilder ();
-            switch (this.Rank)
+            switch (this.Value)
             {
-                case CardRank.Two:
+                case CardValue.Two:
                     sb.Append("2");
                     break;
-                case CardRank.Three:
+                case CardValue.Three:
                     sb.Append("3");
                     break;
-                case CardRank.Four:
+                case CardValue.Four:
                     sb.Append("4");
                     break;
-                case CardRank.Five:
+                case CardValue.Five:
                     sb.Append("5");
                     break;
-                case CardRank.Six:
+                case CardValue.Six:
                     sb.Append("6");
                     break;
-                case CardRank.Seven:
+                case CardValue.Seven:
                     sb.Append("7");
                     break;
-                case CardRank.Eight:
+                case CardValue.Eight:
                     sb.Append("8");
                     break;
-                case CardRank.Nine:
+                case CardValue.Nine:
                     sb.Append("9");
                     break;
-                case CardRank.Ten:
+                case CardValue.Ten:
                     sb.Append("T");
                     break;
-                case CardRank.Jack:
+                case CardValue.Jack:
                     sb.Append("J");
                     break;
-                case CardRank.Queen:
+                case CardValue.Queen:
                     sb.Append("Q");
                     break;
-                case CardRank.King:
+                case CardValue.King:
                     sb.Append("K");
                     break;
-                case CardRank.Ace:
+                case CardValue.Ace:
                     sb.Append("A");
                     break;
                 default:
@@ -220,11 +204,11 @@ namespace AWA.Poker
     /// <summary>
     /// Card suit.
     /// </summary>
-    public enum CardSuit { Clubs, Diamonds, Hearts, Spades, None }
+    public enum CardSuit { Clubs, Diamonds, Hearts, Spades }
 
     /// <summary>
     /// Card rank.
     /// </summary>
-    public enum CardRank { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace, Joker }
+    public enum CardValue { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace }
 }
 

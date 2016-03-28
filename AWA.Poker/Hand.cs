@@ -5,9 +5,11 @@ using System.Text;
 namespace AWA.Poker
 {
     /// <summary>
-    /// Hand.
+    /// A poker hand. A valid poker hand must have at least 5 cards.
+    /// More cards are allowed to be in the hand to allow implementations
+    /// of game sof poker than involve cards.
     /// </summary>
-    public class Hand
+    public class Hand : IComparable<Hand>
     {
         private List<Card> cards;
        
@@ -51,6 +53,11 @@ namespace AWA.Poker
                 sb.Append(c.ToString());
             }
             return "[" + sb.ToString().TrimStart() + "]";
+        }
+
+        public int CompareTo(Hand other)
+        {
+            throw new NotImplementedException();
         }
     }
 }
