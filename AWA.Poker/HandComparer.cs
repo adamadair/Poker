@@ -42,17 +42,31 @@ namespace AWA.Poker
                 {
                     case PokerHand.HighCard:
                         return highCardBreak(x, y);
-                    
-
+                    case PokerHand.OnePair:
+                        return pairBreak(x, y);
+                    case PokerHand.TwoPair:
+                        return twoPairBreak(x, y);
+                    case PokerHand.ThreeOfAKind:
+                        return threeOfAKindBreak(x, y);
+                    case PokerHand.FourOfAKind:
+                        return fourOfAKindBreak(x, y);
+                    case PokerHand.FullHouse:
+                        return threeOfAKindBreak(x, y);
+                    case PokerHand.Straight:
+                        return straightBreak(x, y);
+                    case PokerHand.Flush:
+                        return flushBreak(x, y);
+                    case PokerHand.StraightFlush:
+                        return straightBreak(x, y);
                 }
             }
-                return 0;
+            return 0;
         }
 
         private int highCardBreak(Hand x, Hand y)
         {
-            Card[] xHand = x.Cards.OrderBy(c => c.Value).ToArray();
-            Card[] yHand = x.Cards.OrderBy(c => c.Value).ToArray();
+            Card[] xHand = x.Cards.OrderByDescending(c => c.Value).ToArray();
+            Card[] yHand = y.Cards.OrderByDescending(c => c.Value).ToArray();
             return compareHighCards(xHand, yHand);
         }
 
@@ -112,31 +126,85 @@ namespace AWA.Poker
             return cards.Take(n).ToArray();
         }
 
-        private IEnumerable<IGrouping<CardValue, Card>> GroupByNominalValue(IEnumerable<Card> cards)
+        private IEnumerable<IGrouping<CardValue, Card>> GroupByValue(IEnumerable<Card> cards)
         {
             return cards.GroupBy(card => card.Value);
         }
         private IEnumerable<IGrouping<CardValue, Card>> Pairs(IEnumerable<Card> cards)
         {
-            return GroupByNominalValue(cards).Where(group => group.Count() == 2).OrderByDescending(g => g.Key);
+            return GroupByValue(cards).Where(group => group.Count() == 2).OrderByDescending(g => g.Key);
+        }
+    
+        private IEnumerable<IGrouping<CardValue, Card>> Trips(IEnumerable<Card> cards)
+        {
+            return GroupByValue(cards).Where(group => group.Count() == 3).OrderByDescending(g => g.Key);
+        }
+
+        private IEnumerable<IGrouping<CardValue, Card>> Quad(IEnumerable<Card> cards)
+        {
+            return GroupByValue(cards).Where(group => group.Count() == 4).OrderByDescending(g => g.Key);
         }
 
         private int twoPairBreak(Hand x, Hand y)
         {
+            List<Card> xHand = new List<Card>(x.Cards.OrderBy(c => c.Value));
+            List<Card> yHand = new List<Card>(y.Cards.OrderBy(c => c.Value));
+            var xPair = Pairs(xHand).ToArray();
+            var yPair = Pairs(yHand).ToArray();
+            for(int i = 0; i < 2; ++i)
+            {
+                if (xPair[0].Key != yPair[0].Key)
+                {
+                    if (xPair[0].Key < yPair[0].Key)
+                        return -1;
+                    return 1;                
+                }
+            }
+            if (xHand[4].Value < yHand[4].Value)
+                return -1;
+            if (xHand[4].Value > yHand[4].Value)
+                return 1;
             return 0;
         }
 
         private int threeOfAKindBreak(Hand x, Hand y)
         {
-            return 0;
+            var xTripVal = Trips(x.Cards).First().Key;
+            var yTripVal = Trips(y.Cards).First().Key;
+            if (xTripVal < yTripVal) return -1;
+            return 1;
         }
 
         private int fourOfAKindBreak(Hand x, Hand y)
         {
-            return 0;
+            var xQuadVal = Quad(x.Cards).First().Key;
+            var yQuadVal = Quad(y.Cards).First().Key;
+            if (xQuadVal < yQuadVal) return -1;
+            return 1;
         }
 
+        private int straightBreak(Hand x, Hand y)
+        {
+            Card[] xHand = x.Cards.OrderByDescending(c => c.Value).ToArray();
+            xHand = trimLowAce(xHand);
+            Card[] yHand = y.Cards.OrderByDescending(c => c.Value).ToArray();
+            yHand = trimLowAce(yHand);
+            return compareHighCards(xHand, yHand);
+        }
 
+        private Card[] trimLowAce(Card[] ca)
+        {
+            if(ca[0].Value==CardValue.Ace&&ca[4].Value == CardValue.Two)
+            {
+                return ca.Skip(1).ToArray();
+            }
+            return ca;
+        }
+
+        private int flushBreak(Hand x, Hand y)
+        {
+            return highCardBreak(x, y);
+        }        
 
     }
 }

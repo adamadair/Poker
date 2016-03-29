@@ -12,7 +12,18 @@ namespace AWA.Poker
     public class Hand : IComparable<Hand>
     {
         private List<Card> cards;
-       
+
+        private static HandComparer _comparer;
+        private static HandComparer Comparer
+        {
+            get
+            {
+                if (_comparer == null)
+                    _comparer = new HandComparer(new PokerHandEvaluator());
+                return _comparer;
+            }
+        }
+
         public Hand()
         {
             cards = new List<Card>();
@@ -57,7 +68,7 @@ namespace AWA.Poker
 
         public int CompareTo(Hand other)
         {
-            throw new NotImplementedException();
+            return Comparer.Compare(this, other);
         }
     }
 }
