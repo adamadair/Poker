@@ -34,6 +34,7 @@ namespace PokerTests
         public const string PAIR_HAND_3 = "QC QH KH 3D 7S";
         public const string PAIR_HAND_4 = "QC QH AH 3S 7H";
         public const string PAIR_HAND_5 = "4D 4S 8C 9D TS";
+
         [Test()]
         public void HandComparerOnePairTest()
         {
@@ -56,6 +57,17 @@ namespace PokerTests
             Assert.IsTrue(hc.Compare(p3, p4) < 0);
             Assert.IsTrue(hc.Compare(p4, p3) > 0);
             Assert.IsTrue(hc.Compare(p1, p5) == 0);
+        }
+
+        public const string E54_1 = "6D 7C 5D 5H 3S"; 
+        public const string E54_2 = "5C JC 2H 5S 3D";
+        [Test()]
+        public void HandComparerEulerErrorFixTest()
+        {
+            HandComparer hc = new HandComparer(new PokerHandEvaluator());
+            var h1 = new Hand(E54_1);
+            var h2 = new Hand(E54_2);
+            Assert.IsTrue(hc.Compare(h1, h2) < 0);
         }
 
         const string TWO_PAIR_HAND_1 = "5C 5S 7C 7H QH";
@@ -153,6 +165,10 @@ namespace PokerTests
             Assert.IsTrue(hc.Compare(s1, s2) > 0);
             Assert.IsTrue(hc.Compare(s2, s3) < 0);
             Assert.IsTrue(hc.Compare(s3, s2) > 0);
+            Assert.IsTrue(hc.Compare(tk1, s1) < 0);
+            Assert.IsTrue(hc.Compare(s1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk2, s1) < 0);
+            Assert.IsTrue(hc.Compare(s1, tk2) > 0);
         }
 
 
@@ -196,6 +212,15 @@ namespace PokerTests
             Assert.IsTrue(hc.Compare(f3, s2) > 0);
             Assert.IsTrue(hc.Compare(f1, f2) < 0);
             Assert.IsTrue(hc.Compare(f2, f1) > 0);
+
+            Assert.IsTrue(hc.Compare(f1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk1, f1) < 0);
+            Assert.IsTrue(hc.Compare(f1, tk2) > 0);
+            Assert.IsTrue(hc.Compare(tk2, f1) < 0);
+            Assert.IsTrue(hc.Compare(f1, s1) > 0);
+            Assert.IsTrue(hc.Compare(s1, f1) < 0);
+            Assert.IsTrue(hc.Compare(f1, s3) > 0);
+            Assert.IsTrue(hc.Compare(s3, f1) < 0);
             Assert.IsTrue(hc.Compare(f2, f3) == 0);
         }
 
@@ -242,6 +267,17 @@ namespace PokerTests
             Assert.IsTrue(hc.Compare(fh2, f2) > 0);
             Assert.IsTrue(hc.Compare(fh1, fh2) < 0);
             Assert.IsTrue(hc.Compare(fh2, fh1) > 0);
+
+            Assert.IsTrue(hc.Compare(fh1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk1, fh1) < 0);
+            Assert.IsTrue(hc.Compare(fh1, tk2) > 0);
+            Assert.IsTrue(hc.Compare(tk2, fh1) < 0);
+            Assert.IsTrue(hc.Compare(fh1, s1) > 0);
+            Assert.IsTrue(hc.Compare(s1, fh1) < 0);
+            Assert.IsTrue(hc.Compare(fh1, s3) > 0);
+            Assert.IsTrue(hc.Compare(s3, fh1) < 0);
+            Assert.IsTrue(hc.Compare(fh1, f3) > 0);
+            Assert.IsTrue(hc.Compare(f3, fh1) < 0);
         }
 
         public const string FOK_HAND_1 = "5C 5D 5H 5S 4C";
@@ -290,6 +326,19 @@ namespace PokerTests
             Assert.IsTrue(hc.Compare(fk2, fh1) > 0);
             Assert.IsTrue(hc.Compare(fk1, fk2) < 0);
             Assert.IsTrue(hc.Compare(fk2, fk1) > 0);
+
+            Assert.IsTrue(hc.Compare(fk1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk1, fk1) < 0);
+            Assert.IsTrue(hc.Compare(fk1, tk2) > 0);
+            Assert.IsTrue(hc.Compare(tk2, fk1) < 0);
+            Assert.IsTrue(hc.Compare(fk1, s1) > 0);
+            Assert.IsTrue(hc.Compare(s1, fk1) < 0);
+            Assert.IsTrue(hc.Compare(fk1, s3) > 0);
+            Assert.IsTrue(hc.Compare(s3, fk1) < 0);
+            Assert.IsTrue(hc.Compare(fk1, f3) > 0);
+            Assert.IsTrue(hc.Compare(f3, fk1) < 0);
+            Assert.IsTrue(hc.Compare(fk1, fh2) > 0);
+            Assert.IsTrue(hc.Compare(fh2, fk1) < 0);
         }
 
         public const string STRT_FLUSH_HAND_1 = "AC 2C 3C 4C 5C";
@@ -321,6 +370,21 @@ namespace PokerTests
             var sf1 = new Hand(STRT_FLUSH_HAND_1);
             var sf2 = new Hand(STRT_FLUSH_HAND_2);
             var sf3 = new Hand(STRT_FLUSH_HAND_3);
+
+            Assert.IsTrue(hc.Compare(sf1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk1, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, tk2) > 0);
+            Assert.IsTrue(hc.Compare(tk2, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, s1) > 0);
+            Assert.IsTrue(hc.Compare(s1, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, s3) > 0);
+            Assert.IsTrue(hc.Compare(s3, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, f3) > 0);
+            Assert.IsTrue(hc.Compare(f3, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, fh2) > 0);
+            Assert.IsTrue(hc.Compare(fh2, sf1) < 0);
+            Assert.IsTrue(hc.Compare(sf1, fk2) > 0);
+            Assert.IsTrue(hc.Compare(fk2, sf1) < 0);
 
             Assert.IsTrue(hc.Compare(h1, sf1) < 0);
             Assert.IsTrue(hc.Compare(sf1, h1) > 0);
@@ -379,6 +443,25 @@ namespace PokerTests
             var sf3 = new Hand(STRT_FLUSH_HAND_3);
             var r1 = new Hand(ROYAL_HAND_1);
             var r2 = new Hand(ROYAL_HAND_2);
+
+            Assert.IsTrue(hc.Compare(r1, tk1) > 0);
+            Assert.IsTrue(hc.Compare(tk1, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, tk2) > 0);
+            Assert.IsTrue(hc.Compare(tk2, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, s1) > 0);
+            Assert.IsTrue(hc.Compare(s1, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, s3) > 0);
+            Assert.IsTrue(hc.Compare(s3, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, f3) > 0);
+            Assert.IsTrue(hc.Compare(f3, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, fh2) > 0);
+            Assert.IsTrue(hc.Compare(fh2, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, fk2) > 0);
+            Assert.IsTrue(hc.Compare(fk2, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, sf2) > 0);
+            Assert.IsTrue(hc.Compare(sf2, r1) < 0);
+            Assert.IsTrue(hc.Compare(r1, sf3) > 0);
+            Assert.IsTrue(hc.Compare(sf3, r1) < 0);
 
             Assert.IsTrue(hc.Compare(h1, r1) < 0);
             Assert.IsTrue(hc.Compare(r1, h1) > 0);

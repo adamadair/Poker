@@ -87,8 +87,8 @@ namespace AWA.Poker
 
         private int pairBreak(Hand x, Hand y)
         {
-            List<Card> xHand = new List<Card>(x.Cards.OrderBy(c => c.Value));
-            List<Card> yHand = new List<Card>(y.Cards.OrderBy(c => c.Value));
+            List<Card> xHand = new List<Card>(x.Cards.OrderByDescending(c => c.Value));
+            List<Card> yHand = new List<Card>(y.Cards.OrderByDescending(c => c.Value));
             var xPair = Pairs(xHand);
             var yPair = Pairs(yHand);
             if (xPair.First().Key == yPair.First().Key)

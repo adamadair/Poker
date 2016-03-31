@@ -5,12 +5,18 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AWA.Poker", "AWA.Poker\AWA.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerTests", "PokerTests\PokerTests.csproj", "{896709A0-A8BF-4AEF-9251-52516F5B84AC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "euler54", "euler54\euler54.csproj", "{03E1841C-B643-4E87-960F-9F88A14C3DBD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{03E1841C-B643-4E87-960F-9F88A14C3DBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{03E1841C-B643-4E87-960F-9F88A14C3DBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{03E1841C-B643-4E87-960F-9F88A14C3DBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{03E1841C-B643-4E87-960F-9F88A14C3DBD}.Release|Any CPU.Build.0 = Release|Any CPU
 		{169BF174-8B59-4508-BF9D-B759E157437B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{169BF174-8B59-4508-BF9D-B759E157437B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{169BF174-8B59-4508-BF9D-B759E157437B}.Release|Any CPU.ActiveCfg = Release|Any CPU
