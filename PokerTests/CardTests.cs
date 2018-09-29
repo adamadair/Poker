@@ -19,7 +19,7 @@ namespace PokerTests
             Assert.AreEqual(c1.Value, CardValue.King);
         }
 
-        [ExpectedException("AWA.Poker.PokerException")]
+       
         [Test()]
         public void CardConstructorInvalidParameterTest()
         {
@@ -45,7 +45,7 @@ namespace PokerTests
                 ex = e;
             }
             Assert.IsNotNull(ex);
-            throw ex;
+            //throw ex;
         }
 
         [Test()]

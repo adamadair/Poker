@@ -1,0 +1,72 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace TexasHoldemBot.Poker
+{
+    /// <summary>
+    /// A poker hand. A valid poker hand must have at least 5 cards.
+    /// More cards are allowed to be in the hand to allow implementations
+    /// of game of poker that involve more cards.
+    /// </summary>
+    public class Hand : IComparable<Hand>
+    {
+        private readonly List<Card> _cards;
+
+        private static HandComparer _comparer;
+        private static HandComparer Comparer => _comparer ?? (_comparer = new HandComparer(new PokerHandEvaluator()));
+
+        public Hand()
+        {
+            _cards = new List<Card>();
+        }
+
+        public Hand(string handCards)
+        {
+            _cards = new List<Card>();
+            foreach (var c in handCards.Split(" ".ToCharArray()))
+            {
+                Add(new Card(c));
+            }
+        }
+
+        public Card[] Cards => _cards.ToArray();
+
+        public void Discard(Card card)
+        {
+            _cards.Remove(card);
+        }
+
+        public void Add(Card card)
+        {
+            _cards.Add(card);
+        }
+
+        public void Add(IEnumerable<Card> cards)
+        {
+            _cards.AddRange(cards);
+        }
+
+        public void Clear()
+        {
+            _cards.Clear();
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (Card c in _cards)
+            {
+                sb.Append(" ");
+                sb.Append(c);
+            }
+            return "[" + sb.ToString().TrimStart() + "]";
+        }
+
+        public int CompareTo(Hand other)
+        {
+            return Comparer.Compare(this, other);
+        }
+    }
+}
+

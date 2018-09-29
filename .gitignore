@@ -38,3 +38,12 @@ Thumbs.db
 
 #dotCover
 *.dotCover
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+*.DotSettings
