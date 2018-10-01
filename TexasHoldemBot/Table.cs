@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using TexasHoldemBot.Poker;
 
 namespace TexasHoldemBot
@@ -18,48 +14,36 @@ namespace TexasHoldemBot
 
         public int BigBlind { get; set; }
 
+        public int MinimumBet => 2 * BigBlind;
+
         public List<Card> TableCards { get; set; }
 
         public void ParseTableCards(string input)
         {
-            this.TableCards = new List<Card>();
+            TableCards = new List<Card>();
 
             string[] split = input.Split(',');
 
-            foreach (string cardString in split)
+            foreach (var cardString in split)
             {
-                this.TableCards.Add(new Card(cardString));
+                TableCards.Add(new Card(cardString));
             }
         }
 
         public void ClearTableCards()
         {
-            this.TableCards = new List<Card>();
+            TableCards = new List<Card>();
         }
 
         public void SetSmallBlind(int value)
         {
-            this.SmallBlind = value;
+            SmallBlind = value;
         }
 
         public void SetBigBlind(int value)
         {
-            this.BigBlind = value;
+            BigBlind = value;
         }
 
-        public List<Card> GetTableCards()
-        {
-            return this.TableCards;
-        }
-
-        public int GetSmallBlind()
-        {
-            return this.SmallBlind;
-        }
-
-        public int GetBigBlind()
-        {
-            return this.BigBlind;
-        }
     }
 }

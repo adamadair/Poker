@@ -12,9 +12,8 @@ namespace TexasHoldemBot.Poker
     public class BrecherHandEvaluator : IPokerHandEvaluator
     {
         public PokerHand Evaluate(Hand h)
-        {
-            long handCode = h.Cards.Sum(card => CardToCode(card));
-            int strength = GetHandStrength(handCode, h.Cards.Length);
+        {            
+            int strength = GetHandStrength(h);
             if (strength < BrecherHandEval.PAIR)
                 return PokerHand.HighCard;
             if (strength < BrecherHandEval.TWO_PAIR)
@@ -40,27 +39,14 @@ namespace TexasHoldemBot.Poker
                 return PokerHand.RoyalFlush;
 
             return PokerHand.StraightFlush;
-            /*
-                return PokerHand.TwoPair;
-            case BrecherHandEval.THREE_OF_A_KIND:
-                return PokerHand.ThreeOfAKind;
-            case BrecherHandEval.STRAIGHT:
-                return PokerHand.Straight;
-            case BrecherHandEval.FLUSH:
-                return PokerHand.Flush;
-            case BrecherHandEval.FULL_HOUSE:
-                return PokerHand.FullHouse;
-            case BrecherHandEval.FOUR_OF_A_KIND:
-                return PokerHand.FourOfAKind;
-            case BrecherHandEval.STRAIGHT_FLUSH:
-                return PokerHand.StraightFlush;
-            default:
-                return PokerHand.RoyalFlush;
-                */
-
         }
 
-        private int GetHandStrength(long handCode, int handSize)
+        public static int GetHandStrength(Hand h)
+        {
+            return GetHandStrength(HandToCode(h), h.Cards.Length);
+        }
+
+        private static int GetHandStrength(long handCode, int handSize)
         {
             switch (handSize)
             {
@@ -75,12 +61,18 @@ namespace TexasHoldemBot.Poker
             }
         }
 
-        private long CardToCode(Card c)
+        public static long HandToCode(Hand h)
+        {
+            long handCode = h.Cards.Sum(card => CardToCode(card));
+            return handCode;
+        }
+
+        public static long CardToCode(Card c)
         {
             return 1L << (16 * SuitToNumber(c.Suit) + ValueToNumber(c.Value));
         }
 
-        private int SuitToNumber(CardSuit s)
+        private static int SuitToNumber(CardSuit s)
         {
             switch (s)
             {
@@ -97,7 +89,7 @@ namespace TexasHoldemBot.Poker
             return 0;
         }
 
-        private int ValueToNumber(CardValue v)
+        private static int ValueToNumber(CardValue v)
         {
             switch (v)
             {
@@ -267,9 +259,9 @@ namespace TexasHoldemBot.Poker
              * We don't care which suit is which; we arbitrarily call them c,d,h,s.
              */
             var c = (int)hand & 0x1FFF;
-            var d = (int)((uint)hand >> 16) & 0x1FFF;
-            var h = (int)((uint)hand >> 32) & 0x1FFF;
-            var s = (int)((uint)hand >> 48) & 0x1FFF;
+            var d = (int)((ulong)hand >> 16) & 0x1FFF;
+            var h = (int)((ulong)hand >> 32) & 0x1FFF;
+            var s = (int)((ulong)hand >> 48) & 0x1FFF;
 
             switch (NbrOfRanks[ranks = c | d | h | s])
             {
@@ -419,9 +411,9 @@ namespace TexasHoldemBot.Poker
         {
 
             var c = (int)hand & 0x1FFF;
-            var d = (int)((uint)hand >> 16) & 0x1FFF;
-            var h = (int)((uint)hand >> 32) & 0x1FFF;
-            var s = (int)((uint)hand >> 48) & 0x1FFF;
+            var d = (int)((ulong)hand >> 16) & 0x1FFF;
+            var h = (int)((ulong)hand >> 32) & 0x1FFF;
+            var s = (int)((ulong)hand >> 48) & 0x1FFF;
 
             var ranks = c | d | h | s;
             int i;
@@ -495,9 +487,9 @@ namespace TexasHoldemBot.Poker
         {
 
             var c = (int)hand & 0x1FFF;
-            var d = (int)((uint)hand >> 16) & 0x1FFF;
-            var h = (int)((uint)hand >> 32) & 0x1FFF;
-            var s = (int)((uint)hand >> 48) & 0x1FFF;
+            var d = (int)((ulong)hand >> 16) & 0x1FFF;
+            var h = (int)((ulong)hand >> 32) & 0x1FFF;
+            var s = (int)((ulong)hand >> 48) & 0x1FFF;
 
             var ranks = c | d | h | s;
             int i;

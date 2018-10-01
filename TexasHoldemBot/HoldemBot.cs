@@ -13,6 +13,11 @@ namespace TexasHoldemBot
             _currentState = new GameState();
         }
 
+        public GameState GetCurrentState()
+        {
+            return _currentState;
+        }
+
         public void Run()
         {
             string line;
@@ -74,16 +79,10 @@ namespace TexasHoldemBot
                         _currentState.TimePerMove = Convert.ToInt32(value);
                         break;
                     case "player_names":
-                        string[] playerNames = value.Split(',');
-                        foreach (var playerName in playerNames)
-                        {
-                            var player = new Player(playerName);
-                            _currentState.Players.Add(playerName, player);
-                        }
-
+                        _currentState.SetPlayers(value);
                         break;
                     case "your_bot":
-                        _currentState.MyName = value;
+                        _currentState.SetMyName(value);
                         break;
                     case "initial_stack":
                         foreach (Player player in _currentState.Players.Values)

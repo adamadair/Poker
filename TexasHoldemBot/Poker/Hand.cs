@@ -14,7 +14,17 @@ namespace TexasHoldemBot.Poker
         private readonly List<Card> _cards;
 
         private static HandComparer _comparer;
-        private static HandComparer Comparer => _comparer ?? (_comparer = new HandComparer(new PokerHandEvaluator()));
+        public static HandComparer Comparer {
+            get
+            {
+                if (_comparer == null)
+                {
+                    _comparer = new HandComparer(new BrecherHandEvaluator());
+                }
+                return _comparer;
+            }
+            set => _comparer = value;
+        }
 
         public Hand()
         {

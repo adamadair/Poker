@@ -13,8 +13,10 @@ namespace TexasHoldemBot.Poker
 
         public HandComparer(IPokerHandEvaluator evaluator)
         {
-            _evaluator = evaluator ?? throw new PokerException("Evaluator can not be null.");
+            if (evaluator == null) throw new PokerException("Evaluator can not be null.");
+            _evaluator = evaluator;
         }
+
         /// <inheritdoc />
         /// <summary>
         /// Compares to hands of poker.

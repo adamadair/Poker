@@ -38,11 +38,15 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BrecherHandEvaluatorTests.cs" />
+    <Compile Include="TexasHoldemBot\BrecherHandEvaluatorTests.cs" />
     <Compile Include="CardTests.cs" />
     <Compile Include="HandComparerTests.cs" />
     <Compile Include="HandEvaluatorTests.cs" />
     <Compile Include="HandTests.cs" />
+    <Compile Include="TexasHoldemBot\Cards.cs" />
+    <Compile Include="TexasHoldemBot\GameStateTest.cs" />
+    <Compile Include="TexasHoldemBot\PointSystemTests.cs" />
+    <Compile Include="TexasHoldemBot\TexasHoldemHands.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ItemGroup>

@@ -35,12 +35,16 @@ namespace TexasHoldemBot
             TimePerMove = timePerMove;
             MaxTimeBank = maxTimeBank;
             MyName = myName;
+            OtherName = "";
             OnButtonPlayer = onButtonPlayer;
             Pot = pot;
             AmountToCall = amountToCall;
-            _players=new Dictionary<string, Player>();
-            Table = new Table();            
+            Players=new Dictionary<string, Player>();
+            Table = new Table();
+            PlayerNames = new[] {"", ""};
         }
+
+        public string[] PlayerNames { get; private set; }
 
         /// <summary>
         /// Maximum time in milliseconds that your bot can have in its time bank.
@@ -101,16 +105,32 @@ namespace TexasHoldemBot
         /// <summary>
         /// 
         /// </summary>
-        public string MyName { get; set; }
+        public string MyName { get; private set; }
+        public string OtherName { get; private set; }
 
-        private readonly Dictionary<string, Player> _players;
+        public void SetMyName(string name)
+        {
+            MyName = name;
+            OtherName = (MyName == PlayerNames[0]) ? PlayerNames[1] : PlayerNames[2];
+        }
+
+        public Player Me => Players[MyName];
+
+        public Player Them => Players[OtherName];
+
         /// <summary>
         /// 
         /// </summary>
-        public Dictionary<string, Player> Players => _players;
+        public Dictionary<string, Player> Players { get; }
+
         public void SetPlayers(string players)
         {
-
+            PlayerNames = players.Split(',');            
+            foreach (var playerName in PlayerNames)
+            {
+                var player = new Player(playerName);
+                Players.Add(playerName, player);
+            }
         }
 
         /// <summary>

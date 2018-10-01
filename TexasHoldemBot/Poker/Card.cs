@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
 
 namespace TexasHoldemBot.Poker
 {
@@ -105,6 +106,25 @@ namespace TexasHoldemBot.Poker
                     break;
                 default:
                     throw new PokerException(cs + " is an invalid card suite.");
+            }
+        }
+
+        /// <summary>
+        /// Returns true if connected to card c
+        /// </summary>
+        /// <param name="c"></param>
+        /// <returns></returns>
+        public bool IsConnected(Card c)
+        {
+            CardValue v = c.Value;
+            switch (Value)
+            {
+                case CardValue.Two:
+                    return (v == CardValue.Ace || v == CardValue.Three);
+                case CardValue.Ace:
+                    return (v == CardValue.King || v == CardValue.Two);
+                default:
+                    return Math.Abs((int) Value - (int) v) == 1;
             }
         }
 
