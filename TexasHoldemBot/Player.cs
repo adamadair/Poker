@@ -12,6 +12,7 @@ namespace TexasHoldemBot
 
         public Player(string playerName)
         {
+            _hand = new List<Card>();
             Name = playerName;
         }
 
