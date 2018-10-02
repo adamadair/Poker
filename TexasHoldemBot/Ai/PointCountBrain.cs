@@ -55,6 +55,11 @@ namespace TexasHoldemBot.Ai
                 {
                     // This is a really good hand that comes only once in 200 hands or so.
                     // Do not waste. We call anything, but at least try to raise.
+                    return RaiseOrCallAny(3);
+                }
+                if (points >= 50)
+                {
+                    return RaiseOrCallAny(2);
                 }
 
             }
