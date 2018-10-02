@@ -17,8 +17,7 @@ namespace TexasHoldemBot
 
         public void ParseHand(string input)
         {
-            _hand = new List<Card>();
-
+            ClearHand();
             string[] split = input.Split(",".ToCharArray());
 
             foreach (var cardString in split)
@@ -39,5 +38,13 @@ namespace TexasHoldemBot
         {
             return _hand;
         }
+
+        public void ClearHand()
+        {
+            _hand.Clear();
+        }
+
+        public int Wins { get; set; }
+        public int Losses { get; set; }        
     }
 }

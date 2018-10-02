@@ -3,7 +3,7 @@ using TexasHoldemBot.Poker;
 
 namespace TexasHoldemBot.Ai
 {
-    public class DumbBrain : IBotBrain
+    public class DumbBrain : BotBrain
     {
         private readonly IPokerHandEvaluator _evaluator;
 
@@ -12,14 +12,18 @@ namespace TexasHoldemBot.Ai
             _evaluator = e;
         }
 
-        public Move GetMove(GameState state)
+        public override void NewHand()
         {
-            var cardToEvaluate = state.GetMyCards();
+            
+        }
+
+        public override Move GetMove()
+        {
+            var cardToEvaluate = State.GetMyCards();
             if (cardToEvaluate.Cards.Length < 2)
             {
                 throw new Exception("Bad number of cards");
             }
-
             var h = PokerHand.HighCard;
             if (cardToEvaluate.Cards.Length == 2)
             {
@@ -30,22 +34,25 @@ namespace TexasHoldemBot.Ai
             {
                 h = _evaluator.Evaluate(cardToEvaluate);
             }
-
             if (h < PokerHand.OnePair)
             {  // We only have a high card
-                if (state.BetRound == BetRound.River )
+                if (State.BetRound == BetRound.River)
                 {  // Check if we're on the river with high card
                     return new Move(MoveType.Check);
                 }
                 return new Move(MoveType.Call);
             }
-
             if (h < PokerHand.Straight)
             {  // We have pair, two pair, or three of a kind
                 return new Move(MoveType.Call);
             }
+            return new Move(MoveType.Raise, State.Table.BigBlind * 2);
 
-            return new Move(MoveType.Raise, state.Table.BigBlind * 2);
+        }
+
+        public override void HandComplete(string winner)
+        {
+            
         }
     }
 }

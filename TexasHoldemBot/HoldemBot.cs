@@ -3,10 +3,19 @@ using TexasHoldemBot.Ai;
 
 namespace TexasHoldemBot
 {
+    /// <summary>
+    /// HoldemBot is responsible for parsing data from the game process, retrieving
+    /// moves from the AI brain, and sending the move responses to the game process.
+    /// </summary>
     public class HoldemBot
     {
         private readonly IBotBrain _brain;
         private readonly GameState _currentState;
+
+        /// <summary>
+        /// The bot requires a brain to be instantiated. 
+        /// </summary>
+        /// <param name="brain"></param>
         public HoldemBot(IBotBrain brain)
         {
             _brain = brain;
@@ -18,10 +27,20 @@ namespace TexasHoldemBot
             return _currentState;
         }
 
+        private void ClearAllCards()
+        {
+            _currentState.Table.ClearTableCards();
+            _currentState.Me.ClearHand();
+            _currentState.Them.ClearHand();
+        }
+
+        /// <summary>
+        /// Run the bot.
+        /// </summary>
         public void Run()
         {
             string line;
-
+            _brain.RegisterGameState(_currentState);
             while ((line = BotIo.In.ReadLine()) != null)
             {
                 if (line.Length == 0) continue;
@@ -46,9 +65,18 @@ namespace TexasHoldemBot
                         if (parts[1] == "move")
                         {
                             _currentState.TimeBank = (int.Parse(parts[2]));
-                            Move move = _brain.GetMove(_currentState);
+                            try
+                            {
+                                Move move = _brain.GetMove();
 
-                            BotIo.Out.WriteLine(move != null ? move.ToString() : "fold");
+                                BotIo.Out.WriteLine(move != null ? move.ToString() : (_currentState.AmountToCall > 0 ? "fold" : "check"));
+                            }
+                            catch (Exception ex)
+                            {
+                                Logger.Error(ex.Message,ex);
+                                BotIo.Out.WriteLine(_currentState.AmountToCall > 0 ? "fold" : "check");
+                            }
+                            
                         }
 
                         break;
@@ -108,11 +136,11 @@ namespace TexasHoldemBot
             }
         }
 
-        /**
-     * Parse data about the game given by the engine
-     * @param key Type of game data given
-     * @param value Value
-     */
+        /// <summary>
+        /// Parse data about the game given by the engine
+        /// </summary>
+        /// <param name="key">Type of game data given</param>
+        /// <param name="value">Value</param>
         private void ParseGameData(string key, string value)
         {
             try
@@ -121,9 +149,8 @@ namespace TexasHoldemBot
                 {
                     case "round":
                         _currentState.RoundNumber = int.Parse(value);
-
-                        // Reset the table at start of round
-                        _currentState.Table.ClearTableCards();
+                        // Clear all the cards at start of round
+                        ClearAllCards();
                         break;
                     case "bet_round":
                         _currentState.SetBetRound(value);
@@ -151,12 +178,12 @@ namespace TexasHoldemBot
             }
         }
 
-        /**
-         * Parse data about given player that the engine has sent
-         * @param playerName Player name that this data is about
-         * @param key Type of player data given
-         * @param value Value
-         */
+        /// <summary>
+        /// Parse data about given player that the engine has sent
+        /// </summary>
+        /// <param name="playerName">Player name that this data is about</param>
+        /// <param name="key">Type of player data given</param>
+        /// <param name="value">Value</param>
         private void ParsePlayerData(string playerName, string key, string value)
         {
             Player player = _currentState.Players[playerName];
@@ -190,7 +217,20 @@ namespace TexasHoldemBot
                         player.Move = (new Move(value));
                         break;
                     case "wins":
-                        // not stored
+                        // There is a value that goes along with this, but
+                        // at this point I don't want to do anything with it.
+                        // Just increment a counter for the winning player.
+                        player.Wins += 1;
+                        try
+                        {
+                            // However, we should let the brain know that the 
+                            // round is over.
+                            _brain.HandComplete(playerName);
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error(ex.Message, ex);
+                        }
                         break;
                     default:
                         Logger.Error($"Cannot parse '{playerName}' data input with key '{key}'");
