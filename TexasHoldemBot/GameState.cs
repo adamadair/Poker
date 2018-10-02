@@ -153,7 +153,7 @@ namespace TexasHoldemBot
         public Hand GetMyCards()
         {
             var h = new Hand();
-            h.Add(Players[MyName].GetHand());
+            h.Add(Players[MyName].Cards);
             h.Add(Table.TableCards);
             return h;
         }

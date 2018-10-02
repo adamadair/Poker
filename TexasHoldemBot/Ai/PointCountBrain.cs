@@ -4,6 +4,7 @@ using System.Linq;
 using System.Security.Authentication.ExtendedProtection;
 using System.Text;
 using System.Threading.Tasks;
+using TexasHoldemBot.Poker;
 
 namespace TexasHoldemBot.Ai
 {
@@ -32,7 +33,7 @@ namespace TexasHoldemBot.Ai
             return GetPreFlopMove();
         }
 
-        public int StartingPoints => HoldemPointSystem.HoleCardPoints(State.Me.GetHand().ToArray());
+        public int StartingPoints => HoldemPointSystem.HoleCardPoints(State.Me.Cards.ToArray());
 
         /*
            The pre-flop strategy based on page 27-30.
@@ -41,10 +42,16 @@ namespace TexasHoldemBot.Ai
         public Move GetPreFlopMove()
         {
             int points = StartingPoints;
+            Hand h = new Hand(State.Me.Cards);
+            Logger.Info($"Getting preflop move, {h} = {points}");
             if (AmButton)
             {
+                // We are on the button spot, so can be slightly 
+                // more aggressive.
                 if (points == 0)
                 {
+                    // If we have shit cards, we can still stay in if the other
+                    // player hasn't raised, otherwise fold.
                     if (ToCall == 0)
                     {
                         return CheckMove;
@@ -53,18 +60,64 @@ namespace TexasHoldemBot.Ai
                 }
                 if (points >= 60)
                 {
-                    // This is a really good hand that comes only once in 200 hands or so.
+                    // This is a really good start that comes only once in 200 hands or so.
                     // Do not waste. We call anything, but at least try to raise.
+                    return RaiseOrCallAny(3); // Three times the normal bet. If we push out the other player
+                                     // Oh well.
+                }
+                if (points >= 50)
+                {
+                    // This is still a very good start, and we should not put up with shit.                    
+                    return RaiseOrCallAny(2); // Two times normal bet.
                 }
 
-            }
-            else
-            {
-                if (points == 0)
+                if (points >= 40)
                 {
-                    return FoldMove; // Fold shit hands. 
+                    return LimitRaise(2);
                 }
-                
+                if (points >= 30)
+                {
+                    return LimitRaise(1);
+                }
+
+                if (points >= 20)
+                {
+                    return LimitCall(2);
+                }
+
+                return LimitCall(1);
+
+            }
+            // Not button
+            if (points == 0)
+            {
+                return FoldMove; // Fold shit hands. 
+            }
+            if (points >= 60)
+            {
+                // This is a really good start that comes only once in 200 hands or so.
+                // Do not waste. We call anything, but at least try to raise.
+                return RaiseOrCallAny(3); // Three times the normal bet. If we push out the other player
+                // Oh well.
+            }
+            if (points >= 50)
+            {
+                // This is still a very good start, and we should not put up with shit.                    
+                return RaiseOrCallAny(1); // Two times normal bet.
+            }
+
+            if (points >= 40)
+            {
+                return LimitRaise(1);
+            }
+            if (points >= 30)
+            {
+                return LimitCall(3);
+            }
+
+            if (points >= 10)
+            {
+                return LimitCall(1);
             }
 
             return ToCall == 0 ? CheckMove : FoldMove;
@@ -77,8 +130,15 @@ namespace TexasHoldemBot.Ai
         /// <returns></returns>
         public Move LimitCall(int potLimit)
         {
-            //todo fix this.
-            return CallMove;
+            var callLimit = MinimumBet * (potLimit + 1);
+            Logger.Info($"Limit Call to {callLimit}");
+            if (Pot + ToCall <= callLimit)
+            {
+                Logger.Info("Calling");
+                return CallMove;
+            }
+            Logger.Info("Folding");
+            return FoldMove;
         }
 
         /// <summary>
@@ -87,9 +147,21 @@ namespace TexasHoldemBot.Ai
         /// <param name="betCount"></param>
         /// <returns></returns>
         public Move LimitRaise(int betCount)
-        {
-            //todo fix this.
-            return CallMove;
+        {            
+            int maxPot = MinimumBet * (betCount * 2);
+            Logger.Info($"LimitRaise limiting pot to {maxPot}");
+            if (Pot+ToCall+MinimumBet < maxPot)
+            {
+                Logger.Info("Attempting raise");
+                AttemptRaise(1);
+            }
+            else if (Pot < maxPot)
+            {
+                Logger.Info("Calling");
+                return CallMove;
+            }
+            Logger.Info("Folding.");
+            return FoldMove;
         }
 
         /// <summary>
@@ -100,10 +172,13 @@ namespace TexasHoldemBot.Ai
         /// <returns>The move</returns>
         public Move RaiseOrCallAny(int betCount)
         {
+            Logger.Info("Raise or call any...");
             if (Pot >= MinimumBet * (betCount + 1))
             {
+                Logger.Info("...calling");
                 return CallMove;
             }
+            Logger.Info("...raising");
             return AttemptRaise(betCount);
         }
 
@@ -120,12 +195,14 @@ namespace TexasHoldemBot.Ai
         {
             while (betCount > 0)
             {
-                if (MinimumBet * betCount + ToCall <= Chips)
+                if (MinimumBet * betCount + ToCall <= Chips) 
                 {
+                    Logger.Info("Raise");
                     return Raise(MinimumBet * betCount);
                 }
                 --betCount;
             }
+            Logger.Info("Call");
             return CallMove;
         }
 

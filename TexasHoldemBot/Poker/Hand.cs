@@ -31,6 +31,11 @@ namespace TexasHoldemBot.Poker
             _cards = new List<Card>();
         }
 
+        public Hand(IEnumerable<Card> cards)
+        {
+            _cards = new List<Card>(cards);
+        }
+
         public Hand(string handCards)
         {
             _cards = new List<Card>();
