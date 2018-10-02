@@ -48,4 +48,8 @@ _ReSharper*/
 *.DotSettings.user
 *.DotSettings
 
+# JetBrains Rider
+.idea/
+*.sln.iml
+
 *.zip
