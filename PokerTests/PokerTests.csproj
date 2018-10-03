@@ -38,6 +38,7 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="TexasHoldemBot\BotMoveTest.cs" />
     <Compile Include="TexasHoldemBot\BrecherHandEvaluatorTests.cs" />
     <Compile Include="CardTests.cs" />
     <Compile Include="HandComparerTests.cs" />
@@ -46,6 +47,7 @@
     <Compile Include="TexasHoldemBot\Cards.cs" />
     <Compile Include="TexasHoldemBot\GameStateTest.cs" />
     <Compile Include="TexasHoldemBot\PointSystemTests.cs" />
+    <Compile Include="TexasHoldemBot\TestScripts.cs" />
     <Compile Include="TexasHoldemBot\TexasHoldemHands.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />

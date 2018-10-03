@@ -11,6 +11,11 @@ namespace TexasHoldemBot.Ai
 
     public class PointCountBrain : BotBrain
     {
+        private IPokerHandEvaluator _evaluator;
+        public PointCountBrain(IPokerHandEvaluator evaluator)
+        {
+            _evaluator = evaluator;
+        }
         public override void NewHand()
         {
             Logger.Info("***New hand started***");
@@ -23,14 +28,18 @@ namespace TexasHoldemBot.Ai
 
         public override Move GetMove()
         {
-
+            Move m;
             if (State.BetRound == BetRound.Flop)
-                return GetFlopMove();
-            if (State.BetRound == BetRound.Turn)
-                return GetTurnMove();
-            if (State.BetRound == BetRound.River)
-                return GetRiverMove();
-            return GetPreFlopMove();
+                m = GetFlopMove();
+            else if (State.BetRound == BetRound.Turn)
+                m = GetTurnMove();
+            else if (State.BetRound == BetRound.River)
+                m = GetRiverMove();
+            else
+                m = GetPreFlopMove();
+
+            Logger.Info($"Move = {m}");
+            return m;
         }
 
         public int StartingPoints => HoldemPointSystem.HoleCardPoints(State.Me.Cards.ToArray());
@@ -130,6 +139,10 @@ namespace TexasHoldemBot.Ai
         /// <returns></returns>
         public Move LimitCall(int potLimit)
         {
+            if (ToCall == 0)
+            {
+                return CheckMove;
+            }
             var callLimit = MinimumBet * (potLimit + 1);
             Logger.Info($"Limit Call to {callLimit}");
             if (Pot + ToCall <= callLimit)
@@ -153,15 +166,17 @@ namespace TexasHoldemBot.Ai
             if (Pot+ToCall+MinimumBet < maxPot)
             {
                 Logger.Info("Attempting raise");
-                AttemptRaise(1);
+                return AttemptRaise(1);
             }
-            else if (Pot < maxPot)
+            if (Pot < maxPot)
             {
                 Logger.Info("Calling");
                 return CallMove;
             }
             Logger.Info("Folding.");
-            return FoldMove;
+            if(ToCall>0)
+                return FoldMove;
+            return CheckMove;
         }
 
         /// <summary>
@@ -222,18 +237,79 @@ namespace TexasHoldemBot.Ai
 
         public Move GetFlopMove()
         {
-
-            return ToCall == 0 ? CheckMove : FoldMove;
+            return GetNextMove();
         }
 
         public Move GetTurnMove()
         {
-            return ToCall == 0 ? CheckMove : FoldMove;
+            return GetNextMove();
         }
         public Move GetRiverMove()
         {
-            return ToCall == 0 ? CheckMove : FoldMove;
+            return GetNextMove();
         }
 
+        private Move GetNextMove()
+        {
+            int points = StartingPoints;
+            var cardToEvaluate = State.GetMyCards();
+            if (cardToEvaluate.Cards.Length < 2)
+            {
+                throw new Exception("Bad number of cards");
+            }
+            var h = PokerHand.HighCard;
+            if (cardToEvaluate.Cards.Length == 2)
+            {
+                if (cardToEvaluate.Cards[0].Value == cardToEvaluate.Cards[1].Value)
+                    h = PokerHand.OnePair;
+            }
+            else
+            {
+                h = _evaluator.Evaluate(cardToEvaluate);
+            }
+
+            if (h == PokerHand.HighCard)
+            {
+                if (ToCall == 0)
+                {
+                    return CheckMove;
+                }
+                if (State.BetRound<BetRound.River && points >= 20 && ToCall <= MinimumBet)
+                {
+                    return CallMove;
+                }
+                return FoldMove;
+            }
+            if (h == PokerHand.OnePair)
+            {
+                if (ToCall == 0)
+                {
+                    return CheckMove;
+                }
+
+                return CallMove;
+            }
+            if (h == PokerHand.ThreeOfAKind || h == PokerHand.TwoPair)
+            {
+                return LimitRaise(4);
+            }
+
+            if (h == PokerHand.Straight)
+            {
+                return RaiseOrCallAny(1);
+            }
+
+            if (h == PokerHand.Flush)
+            {
+                return RaiseOrCallAny(1);
+            }
+
+            if (h >= PokerHand.FourOfAKind)
+            {
+                return AllIn();
+            }
+
+            return CallMove;
+        }
     }
 }
