@@ -7,12 +7,10 @@ namespace TexasHoldemBot
     /// Stores all the information about a player.
     /// </summary>
     public class Player
-    {        
-        private List<Card> _hand;
-
+    {
         public Player(string playerName)
         {
-            _hand = new List<Card>();
+            Cards = new List<Card>();
             Name = playerName;
         }
 
@@ -23,7 +21,7 @@ namespace TexasHoldemBot
 
             foreach (var cardString in split)
             {
-                _hand.Add(new Card(cardString));
+                Cards.Add(new Card(cardString));
             }
         }
 
@@ -35,17 +33,14 @@ namespace TexasHoldemBot
 
         public Move Move { get; set; }
 
-        public List<Card> GetHand()
-        {
-            return _hand;
-        }
-
         public void ClearHand()
         {
-            _hand.Clear();
+            Cards.Clear();
         }
 
         public int Wins { get; set; }
-        public int Losses { get; set; }        
+        public int Losses { get; set; }
+
+        public List<Card> Cards { get; }
     }
 }
