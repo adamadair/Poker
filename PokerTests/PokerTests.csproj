@@ -45,6 +45,7 @@
     <Compile Include="HandEvaluatorTests.cs" />
     <Compile Include="HandTests.cs" />
     <Compile Include="TexasHoldemBot\Cards.cs" />
+    <Compile Include="TexasHoldemBot\CardTests.cs" />
     <Compile Include="TexasHoldemBot\GameStateTest.cs" />
     <Compile Include="TexasHoldemBot\PointSystemTests.cs" />
     <Compile Include="TexasHoldemBot\TestScripts.cs" />

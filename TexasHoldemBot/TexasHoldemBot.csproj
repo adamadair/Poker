@@ -56,6 +56,7 @@
     <Compile Include="Player.cs" />
     <Compile Include="Poker\BrecherHandEvaluator.cs" />
     <Compile Include="Poker\Card.cs" />
+    <Compile Include="Poker\Deck.cs" />
     <Compile Include="Poker\Hand.cs" />
     <Compile Include="Poker\HandComparer.cs" />
     <Compile Include="Poker\HandEvaluator.cs" />

@@ -6,6 +6,7 @@ using System.IO;
 namespace TexasHoldemBot
 {
 
+
     public static class BotIo
     {
         public static TextWriter Out { get; private set; }

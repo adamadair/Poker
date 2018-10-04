@@ -21,7 +21,7 @@ namespace TexasHoldemBot
 
             foreach (var cardString in split)
             {
-                Cards.Add(new Card(cardString));
+                Cards.Add(Card.Parse(cardString));
             }
         }
 

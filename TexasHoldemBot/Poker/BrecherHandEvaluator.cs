@@ -41,6 +41,12 @@ namespace TexasHoldemBot.Poker
             return PokerHand.StraightFlush;
         }
 
+        public static float WinningHandPercent(Card[] playerCards, Card[] tableCards)
+        {
+            
+            return 0.0f;
+        }
+
         public static int GetHandStrength(Hand h)
         {
             return GetHandStrength(HandToCode(h), h.Cards.Length);

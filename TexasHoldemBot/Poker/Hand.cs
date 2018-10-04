@@ -41,7 +41,7 @@ namespace TexasHoldemBot.Poker
             _cards = new List<Card>();
             foreach (var c in handCards.Split(" ".ToCharArray()))
             {
-                Add(new Card(c));
+                Add(Card.Parse(c));
             }
         }
 
