@@ -200,5 +200,45 @@ namespace PokerTests.TexasHoldemBot
             Assert.AreEqual(strength, s);
         }
 
+        
+        [Test]
+        public void FlopProbabilityTests()
+        {
+            var p = BrecherHandEvaluator.FlopProbabilities(new[] {C_QC, C_TS}, new[] {C_AC, C_JC, C_7D});
+            Console.WriteLine($"HC = {p[0]}; P = {p[1]}; 2P = {p[2]}");
+            Console.WriteLine($"3K = {p[3]}; ST = {p[4]}; F = {p[5]}");
+            Console.WriteLine($"FH = {p[6]}; FK = {p[7]}; SF = {p[8]}");            
+        }
+
+        [Test]
+        public void TurnProbabilityTest()
+        {
+            var p = BrecherHandEvaluator.TurnProbabilities(new[] {C_QC, C_TS}, new[] {C_AC, C_JC, C_7D, C_KS});
+            Console.WriteLine($"HC = {p[0]}; P = {p[1]}; 2P = {p[2]}");
+            Console.WriteLine($"3K = {p[3]}; ST = {p[4]}; F = {p[5]}");
+            Console.WriteLine($"FH = {p[6]}; FK = {p[7]}; SF = {p[8]}");                        
+        }
+
+        [Test]
+        public void PercentToWinTest()
+        {
+            // roughly 27% chance to win on this hand
+            var p = BrecherHandEvaluator.WinningHandPercent(new[] {C_QC, C_TS}, new[] {C_JD, C_6C, C_5H, C_2D, C_KC});
+            Console.WriteLine($"percent to win: {p}");
+            Assert.IsTrue(p>.270);
+            Assert.IsTrue(p<.280);            
+            
+            // 100% to win
+            p = BrecherHandEvaluator.WinningHandPercent(new[] {C_AC, C_KC}, new[] {C_JC, C_QC, C_TC, C_2D, C_KH});
+            Console.WriteLine($"percent to win: {p}");
+            Console.WriteLine(p);
+            Assert.IsTrue(p >= .99);
+            
+            // 95% to win
+            p = BrecherHandEvaluator.WinningHandPercent(new[] {C_QC, C_TS}, new[] {C_AC, C_JC, C_7D, C_2D, C_KC});
+            Console.WriteLine($"percent to win: {p}");
+            Console.WriteLine(p);
+            Assert.IsTrue(p >= .95);  
+        }
     }
 }
