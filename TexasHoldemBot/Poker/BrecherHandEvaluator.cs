@@ -1,13 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TexasHoldemBot.Poker
 {
     /// <summary>
-    /// 
+    /// BrecherHandEvaluator is an IPokerHandEvaluator which uses the Steve Brecher's
+    /// method of determining poker hands. 
     /// </summary>
     public class BrecherHandEvaluator : IPokerHandEvaluator
     {
@@ -41,10 +40,152 @@ namespace TexasHoldemBot.Poker
             return PokerHand.StraightFlush;
         }
 
-        public static float WinningHandPercent(Card[] playerCards, Card[] tableCards)
+        public static PokerHand StrengthToPokerHand(int strength)
         {
-            
-            return 0.0f;
+            if (strength < BrecherHandEval.PAIR)
+                return PokerHand.HighCard;
+            if (strength < BrecherHandEval.TWO_PAIR)
+                return PokerHand.OnePair;
+            if (strength < BrecherHandEval.THREE_OF_A_KIND)
+                return PokerHand.TwoPair;
+            if (strength < BrecherHandEval.STRAIGHT)
+                return PokerHand.ThreeOfAKind;
+            if (strength < BrecherHandEval.FLUSH)
+                return PokerHand.Straight;
+            if (strength < BrecherHandEval.FULL_HOUSE)
+                return PokerHand.Flush;
+            if (strength < BrecherHandEval.FOUR_OF_A_KIND)
+                return PokerHand.FullHouse;
+            if (strength < BrecherHandEval.STRAIGHT_FLUSH)
+                return PokerHand.FourOfAKind;
+            return PokerHand.StraightFlush;
+        }
+
+        /// <summary>
+        /// Determine the probability of getting each type of hand when the turn and river cards are turned.
+        /// </summary>
+        /// <param name="playerCards">The players hole cards.</param>
+        /// <param name="tableCards">The cards on the table</param>
+        /// <returns>
+        /// Probability array
+        /// </returns>
+        public static float[] FlopProbabilities(IEnumerable<Card> playerCards, IEnumerable<Card> tableCards)
+        {
+            float[] p = NewProbabilityArray();
+            float[] counts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+            float total = 0.0f;
+            var knownCards = new List<Card>(playerCards);
+            knownCards.AddRange(tableCards);
+            long startingCode = knownCards.Sum(card => CardToCode(card));
+            var remainingDeck = Deck.GetSubDeck(knownCards);
+            var possibilities = Deck.GetTwoCardCombinations(remainingDeck);
+            foreach (var possibility in possibilities)
+            {
+                long handCode = startingCode + CardToCode(possibility.Item1) + CardToCode(possibility.Item2);
+                PokerHand hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
+                counts[(int) hand] += 1.0f;
+                total += 1.0f;
+            }
+
+            // avoid division by 0
+            if (Math.Abs(total) < 1.0f)
+            {
+                return p;
+            }
+
+            for (int i = 0; i < p.Length; ++i)
+            {
+                p[i] = counts[i] / total;
+            }
+            return p;
+        }
+
+        /// <summary>
+        /// Determine the probability of getting each type of hand when the river card is turned.
+        /// </summary>
+        /// <param name="playerCards">The players hole cards.</param>
+        /// <param name="tableCards">The cards on the table</param>
+        /// <returns>
+        /// Probability array
+        /// </returns>
+        public static float[] TurnProbabilities(IEnumerable<Card> playerCards, IEnumerable<Card> tableCards)
+        {
+            float[] p = NewProbabilityArray();
+            float[] counts = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
+            float total = 0.0f;
+            var knownCards = new List<Card>(playerCards);
+            knownCards.AddRange(tableCards);
+            long startingCode = knownCards.Sum(card => CardToCode(card));
+            var possibities = Deck.GetSubDeck(knownCards);
+            foreach (var possibility in possibities)
+            {
+                long handCode = startingCode + CardToCode(possibility);
+                PokerHand hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
+                counts[(int)hand] += 1.0f;
+                total += 1.0f;
+            }
+
+            // avoid division by 0
+            if (Math.Abs(total) < 1.0f)
+            {
+                return p;
+            }
+
+            for (int i = 0; i < p.Length; ++i)
+            {
+                p[i] = counts[i] / total;
+            }
+            return p;
+        }
+
+        /// <summary>
+        /// The probability array keeps track of the probability of getting each type
+        /// of poker hand HIGH CARD to STRAIGHT FLUSH.
+        /// </summary>
+        /// <returns>Newly initialized 9 member float array</returns>
+        private static float [] NewProbabilityArray()
+        {
+            return new[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        }
+
+        /// <summary>
+        /// With all cards turned calculates the percent chance of winning a showdown.
+        /// </summary>
+        /// <param name="playerCards"></param>
+        /// <param name="tableCards"></param>
+        /// <returns></returns>
+        public static float WinningHandPercent(IEnumerable<Card> playerCards, IEnumerable<Card> tableCards)
+        {
+            var pc = playerCards.ToArray();
+            var tc = tableCards.ToArray();
+            var knownCards = new List<Card>(pc);
+            knownCards.AddRange(tc);
+            long myCode = pc.Sum(card => CardToCode(card));
+            long tableCode = tc.Sum(card => CardToCode(card));
+            long myHandCode = myCode + tableCode;
+            int myStrength = BrecherHandEval.Hand7Eval(myHandCode);
+            var remainingDeck = Deck.GetSubDeck(knownCards);
+            var possibilities = Deck.GetTwoCardCombinations(remainingDeck);
+            float wins = 0.0f;
+            float total = 0.0f;
+            foreach (var possibility in possibilities)
+            {
+                total += 1.0f;
+                long handCode = tableCode + CardToCode(possibility.Item1) + CardToCode(possibility.Item2);
+                int handStrength = BrecherHandEval.Hand7Eval(handCode);
+                if (myStrength >= handStrength)
+                {
+                    wins += 1.0f;
+                }
+            }
+
+            // avoid division by 0
+            if (Math.Abs(total) < 1.0f)
+            {
+                return 0.0f;
+            }
+
+            return wins / total;
         }
 
         public static int GetHandStrength(Hand h)
@@ -65,7 +206,8 @@ namespace TexasHoldemBot.Poker
                 default:
                     return 0;
             }
-        }
+        }        
+
 
         public static long HandToCode(Hand h)
         {
@@ -117,13 +259,14 @@ namespace TexasHoldemBot.Poker
         }
     }
 
-
-    /**
+    /**********************************************************************************************************
      * BrecherHandEval is a conversion of the HandEval.java code to C#. The Java code
      * was a conversion of a C library written by Steve Brecher.
      *
-     * You can find the original Java code here:
+     * You can find the original Java code that was the basis for this code here:
      * https://github.com/theaigames/texasholdem-engine/blob/master/com/stevebrecher/HandEval.java
+     **********************************************************************************************************
+     * I've never seen the C code, I've only heard the rumors.
      *
      * Non-instantiable class containing a variety of static poker hand evaluation and related utility methods.
      * <p>
