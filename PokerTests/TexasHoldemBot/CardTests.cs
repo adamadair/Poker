@@ -34,9 +34,12 @@ namespace PokerTests.TexasHoldemBot
             }
         }
 
-
+        /// <summary>
+        /// TEST CASE: Get all two card combinations from a
+        /// full deck of cards.
+        /// </summary>
         [Test]
-        public void DeckTest()
+        public void DeckTwoCardComboTest()
         {
             var deck = Deck.FullDeck();
             Assert.AreEqual(deck.Count,52);
@@ -54,6 +57,9 @@ namespace PokerTests.TexasHoldemBot
             Assert.AreEqual(1326, c);
         }
 
+        /// <summary>
+        /// TEST CASE: Create a sub deck by removing a set of cards.
+        /// </summary>
         [Test]
         public void SubDeckTest()
         {
@@ -69,6 +75,26 @@ namespace PokerTests.TexasHoldemBot
             var combos = Deck.GetTwoCardCombinations(subDeck);
             Assert.AreEqual(1081, combos.Count());
         }
+
+        /// <summary>
+        /// TEST CASE: Remove card from collection
+        /// Need to be able to remove cards from a collection using separate
+        /// but equal Card objects.
+        /// </summary>
+        [Test]
+        public void RemoveCardTest()
+        {
+            var deck = Deck.FullDeck();       // Get a full deck
+            Assert.AreEqual(52, deck.Count);        // Verify the deck is 52 cards.
+            
+            // Remove the Ace of clubs from the deck
+            deck.Remove(new Card(CardSuit.Clubs, CardValue.Ace));
+            
+            Assert.AreEqual(51, deck.Count);        // Verify the deck is 51 cards.
+            
+            Assert.False(deck.Contains(Card.CA)); // Verify the ace of clubs is gone
+        }
+        
         
     }
 }

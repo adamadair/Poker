@@ -117,7 +117,6 @@ namespace TexasHoldemBot
                         {
                             player.Chips = int.Parse(value);
                         }
-
                         break;
                     case "initial_big_blind":
                         _currentState.InitialBigBlind = Convert.ToInt32(value);
@@ -151,6 +150,15 @@ namespace TexasHoldemBot
                         _currentState.RoundNumber = int.Parse(value);
                         // Clear all the cards at start of round
                         ClearAllCards();
+                        try
+                        {
+                            // Let the brain know we are staring a new round.
+                            _brain.NewHand();
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error(ex.Message, ex);
+                        }
                         break;
                     case "bet_round":
                         _currentState.SetBetRound(value);

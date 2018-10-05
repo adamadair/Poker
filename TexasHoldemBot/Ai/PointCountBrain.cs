@@ -12,10 +12,17 @@ namespace TexasHoldemBot.Ai
     public class PointCountBrain : BotBrain
     {
         private IPokerHandEvaluator _evaluator;
+
+        public PointCountBrain()
+        {
+            _evaluator = new BrecherHandEvaluator(); // This seems to be the best evaluator for texas holdem
+        }
+        
         public PointCountBrain(IPokerHandEvaluator evaluator)
         {
             _evaluator = evaluator;
         }
+        
         public override void NewHand()
         {
             Logger.Info("***New hand started***");
@@ -23,7 +30,7 @@ namespace TexasHoldemBot.Ai
 
         public override void HandComplete(string winner)
         {
-            Logger.Info("***Hand Complete***");
+            Logger.Info($"***Hand Complete, {winner} won ***");
         }
 
         public override Move GetMove()
@@ -160,21 +167,23 @@ namespace TexasHoldemBot.Ai
         /// <param name="betCount"></param>
         /// <returns></returns>
         public Move LimitRaise(int betCount)
-        {            
+        {
             int maxPot = MinimumBet * (betCount * 2);
             Logger.Info($"LimitRaise limiting pot to {maxPot}");
-            if (Pot+ToCall+MinimumBet < maxPot)
+            if (Pot + ToCall + MinimumBet < maxPot)
             {
                 Logger.Info("Attempting raise");
                 return AttemptRaise(1);
             }
+
             if (Pot < maxPot)
             {
                 Logger.Info("Calling");
                 return CallMove;
             }
+
             Logger.Info("Folding.");
-            if(ToCall>0)
+            if (ToCall > 0)
                 return FoldMove;
             return CheckMove;
         }
@@ -187,10 +196,10 @@ namespace TexasHoldemBot.Ai
         /// <returns>The move</returns>
         public Move RaiseOrCallAny(int betCount)
         {
-            Logger.Info("Raise or call any...");
+            Logger.Info($"Raise or call any x{betCount}...");
             if (Pot >= MinimumBet * (betCount + 1))
             {
-                Logger.Info("...calling");
+                Logger.Info($"{Pot} too rich...calling");
                 return CallMove;
             }
             Logger.Info("...raising");
@@ -208,6 +217,7 @@ namespace TexasHoldemBot.Ai
         /// <returns>The move</returns>
         public Move AttemptRaise(int betCount)
         {
+            Logger.Info($"Attempt raise x{betCount}");
             while (betCount > 0)
             {
                 if (MinimumBet * betCount + ToCall <= Chips) 
@@ -215,9 +225,13 @@ namespace TexasHoldemBot.Ai
                     Logger.Info("Raise");
                     return Raise(MinimumBet * betCount);
                 }
+                else
+                {
+                    Logger.Info($"x{betCount} too rich.");
+                }
                 --betCount;
             }
-            Logger.Info("Call");
+            Logger.Info("Fuck!!!! No money, No Raise, Call!");
             return CallMove;
         }
 
@@ -227,18 +241,126 @@ namespace TexasHoldemBot.Ai
         /// <returns>The move</returns>
         public Move AllIn()
         {
-            if (Chips>0 && Chips >= ToCall)
+            Logger.Info("!!! A L L   I N   B I T C H E S !!!");
+            if (Chips > 0 && Chips >= ToCall)
             {
                 return Raise(Chips - ToCall);
             }
-
+            Logger.Info("oops! no money...call :(");
             return CallMove;
         }
 
+        /// <summary>
+        /// On the flop the strategy is as follows:
+        /// 1) If current hand is high card and there is a bet, check and see 
+        /// </summary>
+        /// <returns>Move</returns>
+        /// <exception cref="Exception">
+        /// Exceptions will be thrown if the improper number of cards are
+        /// </exception>
         public Move GetFlopMove()
         {
-            return GetNextMove();
+            
+            Logger.Info("");
+            Logger.Info(":: EVALUATE FLOP ::");
+            int points = StartingPoints;
+            var cardToEvaluate = State.GetMyCards();
+            if (cardToEvaluate.Cards.Length < 2)
+            {
+                throw new Exception("Bad number of cards");
+            }
+            var h = PokerHand.HighCard;
+            if (cardToEvaluate.Cards.Length == 2)
+            {
+                if (cardToEvaluate.Cards[0].Value == cardToEvaluate.Cards[1].Value)
+                    h = PokerHand.OnePair;
+            }
+            else
+            {
+                h = _evaluator.Evaluate(cardToEvaluate);
+            }
+            
+            Logger.Info($"Current hand: {h}; points = {points}");            
+            var probs = BrecherHandEvaluator.FlopProbabilities(State.Me.Cards, State.Table.TableCards);
+            LogProbabilityArray(probs, "Flop");
+            
+            // High card situation 
+            if (h == PokerHand.HighCard)
+            {                
+                if (ToCall == 0)
+                {
+                    var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);
+                    if (AmButton)
+                    {                                                
+                        if (points > 20 && pairProb > 0.45f)
+                        {
+                            Logger.Info($"On button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
+                            return AttemptRaise(1);
+                        }                        
+                    }
+                    else
+                    {
+                        // the other player checked, so there is a chance to bluff here.
+                        if (points > 15 && pairProb > 0.35f)
+                        {
+                            Logger.Info($"Off button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
+                            return AttemptRaise(1);
+                        }                                                
+                    }
+                    Logger.Info("Check!");
+                    return CheckMove;
+                }
+                else
+                {
+                    // The opponent raised on the flop while we only hold a high card
+                    // hand at the moment. We only stay in if there a good chance to 
+                    // get something. 
+                    var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);                                            
+                    if (points > 20 && pairProb > 0.45f && ToCall <= MinimumBet)
+                    {
+                        Logger.Info($"Feeling lucky, calling {ToCall}");
+                        return CallMove;
+                    }                    
+                }
+                
+                Logger.Info("Fold!");
+                return FoldMove;
+            } // END HIGH CARD
+            
+            // ONE PAIR
+            if (h == PokerHand.OnePair)
+            {
+                /*
+                 * Pair Strategy:                 
+                 */
+            }
+            if (h == PokerHand.TwoPair)
+            {
+                /*
+                 * Two Pair Strategy:
+                 */
+                
+            }
+            if (h == PokerHand.ThreeOfAKind)
+            {
+                /*
+                 * Three of a kind strategy:
+                 */                
+            }
+            if (h > PokerHand.Straight)
+            {
+                /*
+                 * Flush strategy:
+                 *   1) If no bet:
+                 *      a) Check %25
+                 *      b) Raise 1 %50
+                 *      c) Raise 2 %25
+                 */                
+            }                                   
+            return FoldMove;
         }
+        
+        
 
         public Move GetTurnMove()
         {
@@ -249,6 +371,26 @@ namespace TexasHoldemBot.Ai
             return GetNextMove();
         }
 
+        private float HandOrBetterProbability(PokerHand h, float[] probs)
+        {
+            int i = (int) h;
+            float prob = 0.0f;
+            while (i < 9)
+            {
+                prob += probs[i];
+                ++i;
+            }
+
+            return prob;
+        }
+        
+        private void LogProbabilityArray(float[] p, string turn)
+        {
+            Logger.Info($"{turn} probabilities:");
+            Logger.Info($"HC = {p[0]}; P = {p[1]}; 2P = {p[2]}");
+            Logger.Info($"3K = {p[3]}; ST = {p[4]}; F = {p[5]}");
+            Logger.Info($"FH = {p[6]}; FK = {p[7]}; SF = {p[8]}");   
+        }
         private Move GetNextMove()
         {
             int points = StartingPoints;

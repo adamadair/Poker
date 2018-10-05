@@ -4,6 +4,25 @@ using System.Text;
 
 namespace TexasHoldemBot.Poker
 {
+    
+    /// <summary>
+    /// An enumeration of possible poker hands in rank order, so the higher the enumerated
+    /// value the better the hand. 
+    /// </summary>
+    public enum PokerHand
+    {
+        HighCard,
+        OnePair,
+        TwoPair,
+        ThreeOfAKind,
+        Straight,
+        Flush,
+        FullHouse,
+        FourOfAKind,
+        StraightFlush,
+        RoyalFlush
+    }
+    
     /// <summary>
     /// A poker hand. A valid poker hand must have at least 5 cards.
     /// More cards are allowed to be in the hand to allow implementations
@@ -14,6 +33,7 @@ namespace TexasHoldemBot.Poker
         private readonly List<Card> _cards;
 
         private static HandComparer _comparer;
+        
         public static HandComparer Comparer {
             get
             {
