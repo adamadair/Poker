@@ -7,7 +7,7 @@ namespace TexasHoldemBot
     {
         public const string BOT_NAME_S = "TexasHoldemBot";
         public const int MAJOR_VERSION_I = 1;
-        public const int MINOR_VERSION_I = 1;
+        public const int MINOR_VERSION_I = 2;
 
         public static string Version => $"{BOT_NAME_S} v{MAJOR_VERSION_I}.{MINOR_VERSION_I}";
 

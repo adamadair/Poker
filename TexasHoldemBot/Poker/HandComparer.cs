@@ -57,6 +57,7 @@ namespace TexasHoldemBot.Poker
                 case PokerHand.StraightFlush:
                     return StraightBreak(x, y);
             }
+
             return 0;
         }
 
@@ -77,6 +78,7 @@ namespace TexasHoldemBot.Poker
                 if (xCard.Value < yCard.Value) return -1;
                 if (xCard.Value > yCard.Value) return 1;
             }
+
             return 0;
         }
 
@@ -87,17 +89,20 @@ namespace TexasHoldemBot.Poker
             IGrouping<CardValue, Card>[] xPair = Pairs(xHand).ToArray();
             IGrouping<CardValue, Card>[] yPair = Pairs(yHand).ToArray();
             if (xPair.First().Key == yPair.First().Key)
-            {                
-                foreach(Card xp in xPair.First())
+            {
+                foreach (Card xp in xPair.First())
                 {
                     xHand.Remove(xp);
                 }
-                foreach(Card yp in yPair.First())
+
+                foreach (Card yp in yPair.First())
                 {
                     yHand.Remove(yp);
                 }
+
                 return CompareHighCards(GetCardArray(xHand, 3), GetCardArray(yHand, 3));
             }
+
             if (xPair.First().Key > yPair.First().Key) return 1;
             return -1;
         }
@@ -118,11 +123,12 @@ namespace TexasHoldemBot.Poker
         {
             return cards.GroupBy(card => card.Value);
         }
+
         private IEnumerable<IGrouping<CardValue, Card>> Pairs(IEnumerable<Card> cards)
         {
             return GroupByValue(cards).Where(group => group.Count() == 2).OrderByDescending(g => g.Key);
         }
-    
+
         private IEnumerable<IGrouping<CardValue, Card>> Trips(IEnumerable<Card> cards)
         {
             return GroupByValue(cards).Where(group => group.Count() == 3).OrderByDescending(g => g.Key);
@@ -139,13 +145,14 @@ namespace TexasHoldemBot.Poker
             var yHand = new List<Card>(y.Cards.OrderBy(c => c.Value));
             IGrouping<CardValue, Card>[] xPair = Pairs(xHand).ToArray();
             IGrouping<CardValue, Card>[] yPair = Pairs(yHand).ToArray();
-            for(var i = 0; i < 2; ++i)
+            for (var i = 0; i < 2; ++i)
             {
                 if (xPair[0].Key == yPair[0].Key) continue;
                 if (xPair[0].Key < yPair[0].Key)
                     return -1;
                 return 1;
             }
+
             if (xHand[4].Value < yHand[4].Value)
                 return -1;
             return xHand[4].Value > yHand[4].Value ? 1 : 0;
@@ -178,16 +185,17 @@ namespace TexasHoldemBot.Poker
 
         private static Card[] TrimLowAce(Card[] ca)
         {
-            if(ca[0].Value==CardValue.Ace&&ca[4].Value == CardValue.Two)
+            if (ca[0].Value == CardValue.Ace && ca[4].Value == CardValue.Two)
             {
                 return ca.Skip(1).ToArray();
             }
+
             return ca;
         }
 
         private int FlushBreak(Hand x, Hand y)
         {
             return HighCardBreak(x, y);
-        }        
+        }
     }
 }

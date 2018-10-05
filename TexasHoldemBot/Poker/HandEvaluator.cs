@@ -2,23 +2,6 @@
 
 namespace TexasHoldemBot.Poker
 {
-    /// <summary>
-    /// An enumeration of possible poker hands in rank order, so the higher the enumerated
-    /// value the better the hand. 
-    /// </summary>
-    public enum PokerHand
-    {
-        HighCard,
-        OnePair,
-        TwoPair,
-        ThreeOfAKind,
-        Straight,
-        Flush,
-        FullHouse,
-        FourOfAKind,
-        StraightFlush,
-        RoyalFlush
-    }
 
     /// <summary>
     /// The interface for poker hand evaluator. By extracting the interface leaves open the

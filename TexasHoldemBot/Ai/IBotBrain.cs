@@ -1,5 +1,18 @@
 ﻿namespace TexasHoldemBot.Ai
 {
+
+    /// <summary>
+    /// 
+    /// </summary>
+    public enum ChipStatus
+    {
+        lost,
+        losing,
+        even,
+        winning,
+        won
+    };
+    
     public interface IBotBrain
     {
         void RegisterGameState(GameState state);
@@ -10,17 +23,16 @@
 
     public abstract class BotBrain : IBotBrain
     {
+        protected static Move FoldMove { get; } = new Move(MoveType.Fold);
+        protected static Move CallMove { get; } = new Move(MoveType.Call);
+        protected static Move CheckMove { get; } = new Move(MoveType.Check);
 
-        public static Move FoldMove { get; } = new Move(MoveType.Fold);
-        public static Move CallMove { get; } = new Move(MoveType.Call);
-        public static Move CheckMove { get; } = new Move(MoveType.Check);
-
-        public static Move Raise(int amount)
+        protected static Move Raise(int amount)
         {
             return new Move(MoveType.Raise, amount);
         }
 
-        public GameState State { get; private set; }
+        protected GameState State { get; private set; }
 
         public void RegisterGameState(GameState state)
         {
@@ -31,11 +43,32 @@
         public abstract Move GetMove();
         public abstract void HandComplete(string winner);
 
-        public bool AmButton => State.MyName == State.OnButtonPlayer;
-        public int ToCall => State.AmountToCall;
-        public int Chips => State.Me.Chips;
-        public int MinimumBet => State.Table.MinimumBet;
+        protected bool AmButton => State.MyName == State.OnButtonPlayer;
+        protected int ToCall => State.AmountToCall;
+        protected int Chips => State.Me.Chips;
+        protected int MinimumBet => State.Table.MinimumBet;
 
-        public int Pot => State.Pot;
+        protected int Pot => State.Pot;
+
+        /// <summary>
+        /// Chip status is a quick way to evaluate how well the game is currently going.
+        /// It divides the total number of chips into fifths, so if you are in the
+        /// 3rd fifth, the game is considered even, even though you could have fewer chips
+        /// than the opponent. 
+        /// </summary>
+        protected ChipStatus ChipStatus
+        {
+            get
+            {
+                var p = Chips / (float) (State.Me.Chips + State.Them.Chips);
+                if (p < 0.2f)
+                    return ChipStatus.lost;
+                if (p < 0.4f)
+                    return ChipStatus.losing;
+                if (p < 0.6f)
+                    return ChipStatus.even;
+                return p < 0.8f ? ChipStatus.winning : ChipStatus.won;
+            }
+        }
     }
 }
