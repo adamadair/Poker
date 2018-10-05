@@ -94,7 +94,31 @@ namespace PokerTests.TexasHoldemBot
             
             Assert.False(deck.Contains(Card.CA)); // Verify the ace of clubs is gone
         }
-        
+
+
+        /// <summary>
+        /// I read in MSDN magazine that Tuples are useful for creating a quick
+        /// override for Equals and GetHashCode. I'm curious if this is true.
+        /// The underlying data structure for each card is a Tuple<CardSuit, CardValue>
+        /// object.  
+        /// </summary>
+        [Test]
+        public void HashCodeTest()
+        {
+            // These are two cards, different objects, but of equal
+            // value. They should be "Equal" and the HashCodes should 
+            // be identical. 
+            var card1 = new Card(CardSuit.Diamonds,CardValue.King);
+            var card2 = new Card(CardSuit.Diamonds,CardValue.King);
+            Assert.AreEqual(card1,card2);
+            Assert.IsTrue(card1.Equals(card2));
+            Assert.AreEqual(card1.GetHashCode(), card2.GetHashCode());   
+            Console.WriteLine($"{card1} = {card1.GetHashCode()}");
+            foreach (var c in Deck.FullDeck())
+            {
+                Console.WriteLine($"{c} = {c.GetHashCode()}");
+            }
+        }
         
     }
 }
