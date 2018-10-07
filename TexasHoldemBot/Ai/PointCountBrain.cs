@@ -1,9 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Authentication.ExtendedProtection;
-using System.Text;
-using System.Threading.Tasks;
 using TexasHoldemBot.Poker;
 
 namespace TexasHoldemBot.Ai
@@ -11,8 +7,8 @@ namespace TexasHoldemBot.Ai
 
     public class PointCountBrain : BotBrain
     {
-        private IPokerHandEvaluator _evaluator;
-
+        private readonly IPokerHandEvaluator _evaluator;
+        private Random _random = new Random();
         public PointCountBrain()
         {
             _evaluator = new BrecherHandEvaluator(); // This seems to be the best evaluator for texas holdem
@@ -49,11 +45,22 @@ namespace TexasHoldemBot.Ai
             return m;
         }
 
+        /// <summary>
+        /// The point value of the hole cards.
+        /// </summary>
         public int StartingPoints => HoldemPointSystem.HoleCardPoints(State.Me.Cards.ToArray());
+
+        /// <summary>
+        /// Point value adjusted for table cards present.
+        /// </summary>
+        public int AdjustedPoints =>
+            HoldemPointSystem.PostFlopStrength(State.Me.Cards.ToArray(), State.Table.TableCards.ToArray());
+
+        public float WinningProbability =>
+            BrecherHandEvaluator.WinningHandPercent(State.Me.Cards, State.Table.TableCards);
 
         /*
            The pre-flop strategy based on page 27-30.
-
          */
         public Move GetPreFlopMove()
         {
@@ -250,6 +257,11 @@ namespace TexasHoldemBot.Ai
             return CallMove;
         }
 
+        /*
+         * After the flop we need to make adjustments to the strength value
+         * of the cards that was calculated pre-flop.
+         */
+
         /// <summary>
         /// On the flop the strategy is as follows:
         /// 1) If current hand is high card and there is a bet, check and see 
@@ -263,7 +275,7 @@ namespace TexasHoldemBot.Ai
             
             Logger.Info("");
             Logger.Info(":: EVALUATE FLOP ::");
-            int points = StartingPoints;
+            int points = AdjustedPoints;
             var cardToEvaluate = State.GetMyCards();
             if (cardToEvaluate.Cards.Length < 2)
             {
@@ -283,7 +295,11 @@ namespace TexasHoldemBot.Ai
             Logger.Info($"Current hand: {h}; points = {points}");            
             var probs = BrecherHandEvaluator.FlopProbabilities(State.Me.Cards, State.Table.TableCards);
             LogProbabilityArray(probs, "Flop");
-            
+            float betSize = 0.0f;
+            if (ToCall > 0)
+            {
+                betSize = ToCall / (float) MinimumBet;
+            }
             // High card situation 
             if (h == PokerHand.HighCard)
             {                
@@ -292,7 +308,7 @@ namespace TexasHoldemBot.Ai
                     var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);
                     if (AmButton)
                     {                                                
-                        if (points > 20 && pairProb > 0.45f)
+                        if (points >= 50)
                         {
                             Logger.Info($"On button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
                             return AttemptRaise(1);
@@ -301,11 +317,11 @@ namespace TexasHoldemBot.Ai
                     else
                     {
                         // the other player checked, so there is a chance to bluff here.
-                        if (points > 15 && pairProb > 0.35f)
+                        if (points >= 40)
                         {
                             Logger.Info($"Off button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
                             return AttemptRaise(1);
-                        }                                                
+                        }                                       
                     }
                     Logger.Info("Check!");
                     return CheckMove;
@@ -316,9 +332,9 @@ namespace TexasHoldemBot.Ai
                     // hand at the moment. We only stay in if there a good chance to 
                     // get something. 
                     var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);                                            
-                    if (points > 20 && pairProb > 0.45f && ToCall <= MinimumBet)
+                    if ((points >= 40 && ToCall <= MinimumBet) || points >= 60)
                     {
-                        Logger.Info($"Feeling lucky, calling {ToCall}");
+                        Logger.Info($"Feeling lucky, calling {ToCall}, probability = {pairProb}");
                         return CallMove;
                     }                    
                 }
@@ -330,33 +346,144 @@ namespace TexasHoldemBot.Ai
             // ONE PAIR
             if (h == PokerHand.OnePair)
             {
-                /*
-                 * Pair Strategy:                 
-                 */
+                if (ToCall == 0)
+                {
+                    if (points > 40)
+                    {
+                        Logger.Info($"Raising 1 with a pair, points = {points}");
+                        return AttemptRaise(1);
+                    }
+                    Logger.Info($"Checking with a pair, points = {points}");
+                    return CheckMove;
+                }
+
+                if (betSize < 2.0 && points >= 60)
+                {
+                    Logger.Info($"Attempting re-raise on pair, points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (betSize < 3.0 && points >= 60)
+                {
+                    Logger.Info($"Calling big bet on pair, points = {points}");
+                    return CallMove;
+                }
+
+                if (betSize < 2.0 && points >= 40)
+                {
+                    Logger.Info($"Calling on pair, points = {points}");
+                    return CallMove;
+                }
+                Logger.Info($"Folding with a shitty pair; points = {points}");
+                return FoldMove;
+
             }
             if (h == PokerHand.TwoPair)
             {
                 /*
-                 * Two Pair Strategy:
+                 * Two Pair Strategy: 
                  */
-                
+                if (ToCall == 0)
+                {
+                    if (points > 30)
+                    {
+                        Logger.Info($"Attempting raise 1 for two pair; points = {points}");
+                        return AttemptRaise(1);
+                    }
+
+                    return CheckMove;
+                }
+                if (betSize < 2.0 && points >= 50)
+                {
+                    Logger.Info($"Attempting re-raise on two pair, points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (betSize < 3.0 && points >= 50)
+                {
+                    Logger.Info($"Calling big bet on two pair, points = {points}");
+                    return CallMove;
+                }
+
+                if (betSize < 2.0 && points > 30)
+                {
+                    Logger.Info($"Calling on two pair, points = {points}");
+                    return CallMove;
+                }
+                Logger.Info($"Folding with a shitty two pair; points = {points}");
+                return FoldMove;
             }
             if (h == PokerHand.ThreeOfAKind)
             {
-                /*
-                 * Three of a kind strategy:
-                 */                
+                if (ToCall == 0)
+                {
+                    if (points > 30)
+                    {
+                        Logger.Info($"Raise 1 three of kind; points = {points}");
+                        return AttemptRaise(1);
+                    }
+                    Logger.Info($"Checking with a three of kind, points = {points}");
+                    return CheckMove;
+                }
+                Logger.Info($"Calling on three of a kind, points = {points}");
+                return CallMove;
             }
-            if (h > PokerHand.Straight)
+            if (h == PokerHand.Straight)
             {
-                /*
-                 * Flush strategy:
-                 *   1) If no bet:
-                 *      a) Check %25
-                 *      b) Raise 1 %50
-                 *      c) Raise 2 %25
-                 */                
-            }                                   
+
+                if (ToCall == 0)
+                {
+                    Logger.Info($"Attempt raise 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (_random.Next(100) > 50)
+                {
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return RaiseOrCallAny(1);
+                }
+
+                Logger.Info($"Checking with a three of kind, points = {points}");
+                return CheckMove;
+            }
+
+            if (h == PokerHand.Flush)
+            {
+                if (ToCall == 0)
+                {
+                    if (_random.Next(100) > 75)
+                    {
+                        Logger.Info($"Checking with a three of kind, points = {points}");
+                        return CheckMove;
+                    }
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+                Logger.Info($"Calling on Flush, points = {points}");
+                return CallMove;
+
+            }
+            if (h >= PokerHand.FullHouse)
+            {
+                if (ToCall == 0)
+                {
+                    if (_random.Next(100) > 75)
+                    {
+                        Logger.Info($"Checking with a three of kind, points = {points}");
+                        return CheckMove;
+                    }
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+                if (_random.Next(100) > 25)
+                {
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return RaiseOrCallAny(1);
+                }
+                Logger.Info($"Calling on three of a kind, points = {points}");
+                return CallMove;
+            }
+
             return FoldMove;
         }
         
@@ -364,36 +491,9 @@ namespace TexasHoldemBot.Ai
 
         public Move GetTurnMove()
         {
-            return GetNextMove();
-        }
-        public Move GetRiverMove()
-        {
-            return GetNextMove();
-        }
-
-        private float HandOrBetterProbability(PokerHand h, float[] probs)
-        {
-            int i = (int) h;
-            float prob = 0.0f;
-            while (i < 9)
-            {
-                prob += probs[i];
-                ++i;
-            }
-
-            return prob;
-        }
-        
-        private void LogProbabilityArray(float[] p, string turn)
-        {
-            Logger.Info($"{turn} probabilities:");
-            Logger.Info($"HC = {p[0]}; P = {p[1]}; 2P = {p[2]}");
-            Logger.Info($"3K = {p[3]}; ST = {p[4]}; F = {p[5]}");
-            Logger.Info($"FH = {p[6]}; FK = {p[7]}; SF = {p[8]}");   
-        }
-        private Move GetNextMove()
-        {
-            int points = StartingPoints;
+            Logger.Info("");
+            Logger.Info(":: EVALUATE TURN ::");
+            int points = AdjustedPoints;
             var cardToEvaluate = State.GetMyCards();
             if (cardToEvaluate.Cards.Length < 2)
             {
@@ -410,48 +510,273 @@ namespace TexasHoldemBot.Ai
                 h = _evaluator.Evaluate(cardToEvaluate);
             }
 
+            Logger.Info($"Current hand: {h}; points = {points}");
+            var probs = BrecherHandEvaluator.FlopProbabilities(State.Me.Cards, State.Table.TableCards);
+            LogProbabilityArray(probs, "Flop");
+            float betSize = 0.0f;
+            if (ToCall > 0)
+            {
+                betSize = ToCall / (float)MinimumBet;
+            }
+            // High card situation 
             if (h == PokerHand.HighCard)
             {
                 if (ToCall == 0)
                 {
+                    var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);
+                    if (AmButton)
+                    {
+                        if (points >= 50)
+                        {
+                            Logger.Info($"On button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
+                            return AttemptRaise(1);
+                        }
+                    }
+                    else
+                    {
+                        // the other player checked, so there is a chance to bluff here.
+                        if (points >= 40)
+                        {
+                            Logger.Info($"Off button, Raising a high card hand, points = {points}, pair_prob = {pairProb}");
+                            return AttemptRaise(1);
+                        }
+                    }
+                    Logger.Info("Check!");
                     return CheckMove;
                 }
-                if (State.BetRound<BetRound.River && points >= 20 && ToCall <= MinimumBet)
+                else
                 {
-                    return CallMove;
+                    // The opponent raised on the flop while we only hold a high card
+                    // hand at the moment. We only stay in if there a good chance to 
+                    // get something. 
+                    var pairProb = HandOrBetterProbability(PokerHand.OnePair, probs);
+                    if ((points >= 40 && ToCall <= MinimumBet) || points >= 60)
+                    {
+                        Logger.Info($"Feeling lucky, calling {ToCall}, probability = {pairProb}");
+                        return CallMove;
+                    }
                 }
+
+                Logger.Info("Fold!");
                 return FoldMove;
-            }
+            } // END HIGH CARD
+
+            // ONE PAIR
             if (h == PokerHand.OnePair)
             {
                 if (ToCall == 0)
                 {
+                    if (points > 40)
+                    {
+                        Logger.Info($"Raising 1 with a pair, points = {points}");
+                        return AttemptRaise(1);
+                    }
+                    Logger.Info($"Checking with a pair, points = {points}");
                     return CheckMove;
                 }
 
+                if (betSize < 2.0 && points >= 60)
+                {
+                    Logger.Info($"Attempting re-raise on pair, points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (betSize < 3.0 && points >= 60)
+                {
+                    Logger.Info($"Calling big bet on pair, points = {points}");
+                    return CallMove;
+                }
+
+                if (betSize < 2.0 && points >= 40)
+                {
+                    Logger.Info($"Calling on pair, points = {points}");
+                    return CallMove;
+                }
+                Logger.Info($"Folding with a shitty pair; points = {points}");
+                return FoldMove;
+
+            }
+            if (h == PokerHand.TwoPair)
+            {
+                /*
+                 * Two Pair Strategy: 
+                 */
+                if (ToCall == 0)
+                {
+                    if (points > 30)
+                    {
+                        Logger.Info($"Attempting raise 1 for two pair; points = {points}");
+                        return AttemptRaise(1);
+                    }
+
+                    return CheckMove;
+                }
+                if (betSize < 2.0 && points >= 50)
+                {
+                    Logger.Info($"Attempting re-raise on two pair, points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (betSize < 3.0 && points >= 50)
+                {
+                    Logger.Info($"Calling big bet on two pair, points = {points}");
+                    return CallMove;
+                }
+
+                if (betSize < 2.0 && points > 30)
+                {
+                    Logger.Info($"Calling on two pair, points = {points}");
+                    return CallMove;
+                }
+                Logger.Info($"Folding with a shitty two pair; points = {points}");
+                return FoldMove;
+            }
+            if (h == PokerHand.ThreeOfAKind)
+            {
+                if (ToCall == 0)
+                {
+                    if (points > 30)
+                    {
+                        Logger.Info($"Raise 1 three of kind; points = {points}");
+                        return AttemptRaise(1);
+                    }
+                    Logger.Info($"Checking with a three of kind, points = {points}");
+                    return CheckMove;
+                }
+                Logger.Info($"Calling on three of a kind, points = {points}");
                 return CallMove;
             }
-            if (h == PokerHand.ThreeOfAKind || h == PokerHand.TwoPair)
-            {
-                return LimitRaise(4);
-            }
-
             if (h == PokerHand.Straight)
             {
-                return RaiseOrCallAny(1);
+
+                if (ToCall == 0)
+                {
+                    Logger.Info($"Attempt raise 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+
+                if (_random.Next(100) > 50)
+                {
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return RaiseOrCallAny(1);
+                }
+
+                Logger.Info($"Checking with a three of kind, points = {points}");
+                return CheckMove;
             }
 
             if (h == PokerHand.Flush)
             {
-                return RaiseOrCallAny(1);
-            }
+                if (ToCall == 0)
+                {
+                    if (_random.Next(100) > 75)
+                    {
+                        Logger.Info($"Checking with a three of kind, points = {points}");
+                        return CheckMove;
+                    }
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+                Logger.Info($"Calling on Flush, points = {points}");
+                return CallMove;
 
-            if (h >= PokerHand.FourOfAKind)
+            }
+            if (h >= PokerHand.FullHouse)
             {
-                return AllIn();
+                if (ToCall == 0)
+                {
+                    if (_random.Next(100) > 75)
+                    {
+                        Logger.Info($"Checking with a three of kind, points = {points}");
+                        return CheckMove;
+                    }
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return AttemptRaise(1);
+                }
+                if (_random.Next(100) > 25)
+                {
+                    Logger.Info($"Attempt raise or call any 1 with straight; points = {points}");
+                    return RaiseOrCallAny(1);
+                }
+                Logger.Info($"Calling on three of a kind, points = {points}");
+                return CallMove;
             }
 
-            return CallMove;
+            return FoldMove;
+        }
+        public Move GetRiverMove()
+        {
+            float winProb = WinningProbability;
+            float betSize = 0.0f;
+            if (ToCall > 0)
+            {
+                betSize = ToCall / (float)MinimumBet;
+            }
+            Logger.Info($"Win Probability = {winProb}; BetSize = {betSize}");
+
+            if (ToCall == 0)
+            {
+                if (winProb > 0.9f)
+                {
+                    Logger.Info($"All in");
+                    return AllIn();
+                }
+                if (winProb > 0.8f)
+                {
+                    Logger.Info($"Attempt raise 2");
+                    return AttemptRaise(2);
+                }
+                if (winProb > 0.7f)
+                {
+                    Logger.Info($"Attempt raise 1");
+                    return AttemptRaise(1);
+                }
+                Logger.Info("Check");
+                return CheckMove;
+            }
+            else
+            {
+                if (winProb > 0.9f)
+                {
+                    Logger.Info($"All in");
+                    return AllIn();
+                }
+
+                if (winProb > 0.75f)
+                {
+                    Logger.Info($"Raise or call any 1");
+                    return RaiseOrCallAny(1);
+                }
+
+                if (winProb > 0.5f && betSize <= 2.0)
+                {
+                    Logger.Info($"Call");
+                    return CallMove;
+                }
+            }
+            Logger.Info("Fold");
+            return FoldMove;
+        }
+
+        private float HandOrBetterProbability(PokerHand h, float[] probs)
+        {
+            int i = (int) h;
+            float prob = 0.0f;
+            while (i < 9)
+            {
+                prob += probs[i];
+                ++i;
+            }
+
+            return prob;
+        }
+        
+        private static void LogProbabilityArray(IReadOnlyList<float> p, string turn)
+        {
+            Logger.Info($"{turn} probabilities:");
+            Logger.Info($"HC = {p[0]}; P = {p[1]}; 2P = {p[2]}");
+            Logger.Info($"3K = {p[3]}; ST = {p[4]}; F = {p[5]}");
+            Logger.Info($"FH = {p[6]}; FK = {p[7]}; SF = {p[8]}");   
         }
     }
 }
