@@ -40,6 +40,53 @@ namespace TexasHoldemBot.Poker
         }
 
         /// <summary>
+        /// Gets the paired values in a collection of cards.
+        /// </summary>
+        /// <param name="cards"></param>
+        /// <returns>list of card values</returns>
+        public static List<CardValue> Pairs(IEnumerable<Card> cards)
+        {
+            
+            int[] varray = new[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+            List<CardValue> l = new List<CardValue>();
+            foreach (var c in cards)
+            {
+                varray[(int) c.Value]+=1;
+            }
+
+            foreach (var v in Enum.GetValues(typeof(CardValue)))
+            {
+                if (varray[(int) v] > 1)
+                {
+                    l.Add((CardValue)v);
+                }
+            }
+
+            return l;
+        }
+
+        /// <summary>
+        /// Counts the number of each suit in a collection of cards.
+        /// </summary>
+        /// <param name="cards">The card collection in question</param>
+        /// <returns>Dictionary of suit counts</returns>
+        public static Dictionary<CardSuit,int> Suited(IEnumerable<Card> cards)
+        {
+            var r = new Dictionary<CardSuit, int>
+            {
+                {CardSuit.Clubs, 0},
+                {CardSuit.Diamonds, 0},
+                {CardSuit.Hearts, 0},
+                {CardSuit.Spades, 0}
+            };
+            foreach (var c in cards)
+            {
+                r[c.Suit] += 1;
+            }
+            return r;
+        }        
+
+        /// <summary>
         /// Get all two card combinations from a collection of cards
         /// </summary>
         /// <param name="cards"></param>

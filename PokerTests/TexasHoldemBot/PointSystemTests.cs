@@ -86,6 +86,9 @@ namespace PokerTests.TexasHoldemBot
 
             TestHolePoints(Cards.C_JD, Cards.C_TD, 30);
             TestHolePoints(Cards.C_JD, Cards.C_TC, 20);
+
+            /*** Suited connected cards < 10 should be 20 ***/
+            TestHolePoints(Card.C9, Card.C8, 20 );
         }
 
         private void TestHolePoints(Card c1, Card c2, int expectedScore)
@@ -93,6 +96,105 @@ namespace PokerTests.TexasHoldemBot
             int actualScore = HoldemPointSystem.HoleCardPoints(new[] {c1, c2});
             Console.WriteLine($"[{c1}, {c2}] = {actualScore}");
             Assert.AreEqual(expectedScore, actualScore);
+        }
+
+        [Test]
+        public void IsOpenEndedStraightTest()
+        {
+            Assert.IsTrue(HoldemPointSystem.IsOpenEndedStraightDraw(new []{Card.C3, Card.C4},new []{Card.D5, Card.H6, Card.HK}));
+            Assert.IsTrue(HoldemPointSystem.IsOpenEndedStraightDraw(new[] { Card.C3, Card.C6 }, new[] { Card.D5, Card.H4, Card.HK }));
+            Assert.IsTrue(HoldemPointSystem.IsOpenEndedStraightDraw(new[] { Card.C8, Card.D6 }, new[] { Card.D7, Card.H5, Card.HK }));
+            Assert.IsFalse(HoldemPointSystem.IsOpenEndedStraightDraw(new[] { Card.C8, Card.D6 }, new[] { Card.D7, Card.H4, Card.HK }));
+            Assert.IsFalse(HoldemPointSystem.IsOpenEndedStraightDraw(new[] { Card.CA, Card.D2 }, new[] { Card.D3, Card.H4, Card.HK }));
+            Assert.IsFalse(HoldemPointSystem.IsOpenEndedStraightDraw(new[] { Card.CA, Card.DK }, new[] { Card.D3, Card.HJ, Card.HQ }));
+        }
+
+        [Test]
+        public void FlopPointsTest()
+        {
+            /*** POCKET PAIRS TESTS ***/
+            TestFlopPoints(Card.CA, Card.HA, new[] { Card.DA, Card.H7, Card.C2 }, 120);
+            TestFlopPoints(Card.CK, Card.HK, new[] { Card.DK, Card.H7, Card.C2 }, 100);
+            TestFlopPoints(Card.CQ, Card.HQ, new[] { Card.DQ, Card.H7, Card.C2 }, 100);
+            TestFlopPoints(Card.CJ, Card.HJ, new[] { Card.DJ, Card.H7, Card.C2 }, 80);
+            TestFlopPoints(Card.CT, Card.HT, new[] { Card.DT, Card.H7, Card.C2 }, 80);
+            TestFlopPoints(Card.C9, Card.H9, new[] { Card.D9, Card.H7, Card.C2 }, 60);
+            TestFlopPoints(Card.C8, Card.H8, new[] { Card.D8, Card.H7, Card.C2 }, 60);
+
+            /*** One community card matches hole card ***/
+            TestFlopPoints(Card.DA, Cards.C_KD, new[] { Card.HA, Card.S7, Card.C2 }, 60);
+            TestFlopPoints(Card.DA, Cards.C_KD, new[] { Card.HK, Card.S7, Card.C2 }, 55);
+            TestFlopPoints(Card.HA, Cards.C_KD, new[] { Card.HA, Card.S7, Card.C2 }, 50);
+            TestFlopPoints(Card.HA, Cards.C_KD, new[] { Card.HK, Card.S7, Card.C2 }, 45);
+
+            TestFlopPoints(Card.DA, Cards.C_QD, new[] { Card.HA, Card.S7, Card.C2 }, 50);
+            TestFlopPoints(Card.DA, Cards.C_QD, new[] { Card.HQ, Card.S7, Card.C2 }, 45);
+            TestFlopPoints(Card.HA, Cards.C_QD, new[] { Card.HA, Card.S7, Card.C2 }, 40);
+            TestFlopPoints(Card.HA, Cards.C_QD, new[] { Card.HQ, Card.S7, Card.C2 }, 35);
+
+            /*** Other hole suited/connected combinations (9 or lower) ***/
+            TestFlopPoints(Card.D9, Card.D8, new[] { Card.H9, Card.S7, Card.C2 }, 25);
+            TestFlopPoints(Card.D9, Card.D8, new[] { Card.H8, Card.S7, Card.C2 }, 25);
+
+            /*** One of the community cards is same suit as hole suited cards **/
+            TestFlopPoints(Card.DA, Card.DK, new[] { Card.D8, Card.S7, Card.C2 }, 55);
+            TestFlopPoints(Card.DA, Card.DQ, new[] { Card.D8, Card.S7, Card.C2 }, 45);
+            TestFlopPoints(Card.DA, Card.DJ, new[] { Card.D8, Card.S7, Card.C2 }, 40);
+            TestFlopPoints(Card.DA, Card.DT, new[] { Card.D8, Card.S7, Card.C2 }, 40);
+            
+            TestFlopPoints(Card.DK, Card.DQ, new[] { Card.D8, Card.S7, Card.C2 }, 50);
+            TestFlopPoints(Card.DQ, Card.DJ, new[] { Card.D8, Card.S7, Card.C2 }, 45);
+            TestFlopPoints(Card.DJ, Card.DT, new[] { Card.D8, Card.S7, Card.C2 }, 40);
+
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.D2, Card.S7, Card.C3 }, 30);
+
+            /*** Flop includes pair ***/
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.C8, Card.S8, Card.H3 }, 50);
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.C7, Card.S7, Card.H3 }, 10);
+
+            /*** Flop included Three suited cards ***/
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.DA, Card.DK, Card.D2 }, 50);
+            TestFlopPoints(Card.DT, Card.DJ, new[] { Card.DA, Card.DK, Card.D2 }, 60);
+            TestFlopPoints(Card.DT, Card.HJ, new[] { Card.DA, Card.DK, Card.D2 }, 30);
+            TestFlopPoints(Card.DA, Card.HJ, new[] { Card.DT, Card.DK, Card.D2 }, 40);
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.CA, Card.CK, Card.C2 }, 0);
+
+            /*** Flop includes two suited cards ***/
+            TestFlopPoints(Card.D8, Card.D9, new[] { Card.DA, Card.DK, Card.C2 }, 40);
+            TestFlopPoints(Card.DT, Card.H9, new[] { Card.DA, Card.DK, Card.C2 }, 5);
+            TestFlopPoints(Card.D8, Card.H9, new[] { Card.DA, Card.DK, Card.C2 }, 0);
+            TestFlopPoints(Card.H8, Card.H9, new[] { Card.DA, Card.DK, Card.C2 }, 10);
+        }
+
+        private void TestFlopPoints(Card c1, Card c2, Card[] flop, int expectedScore)
+        {
+            int actualScore = HoldemPointSystem.PostFlopStrength(new[] {c1, c2}, flop);
+            Console.WriteLine($"Hole = [{c1}, {c2}]  Table = {new Hand(flop)}; Adjusted Score = {actualScore}");
+            Assert.AreEqual(expectedScore, actualScore);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
+        public void AfterFlopAdjustmentTest()
+        {
+            // two pairs
+            Console.WriteLine("Pocket Pairs:");
+            PrintPoints(Card.CA, Card.DA, new [] {Card.CK, Card.SK, Card.D2});
+            PrintPoints(Card.CA, Card.DA, new[] { Card.CQ, Card.SQ, Card.D2 });
+            PrintPoints(Card.C5, Card.D5, new[] { Card.CK, Card.SK, Card.D2 });
+            PrintPoints(Card.C5, Card.D5, new[] { Card.CK, Card.SK, Card.D2, Card.D4});
+
+            Console.WriteLine("\nTwo pairs");
+            PrintPoints(Card.C5, Card.C6, new[] { Card.D5, Card.S6, Card.D2 });
+            PrintPoints(Card.CA, Card.CK, new[] { Card.DA, Card.SK, Card.D2 });
+
+        }
+        private void PrintPoints(Card c1, Card c2, Card[] flop)
+        {
+            int actualScore = HoldemPointSystem.PostFlopStrength(new[] { c1, c2 }, flop);
+            Console.WriteLine($"Hole = [{c1}, {c2}]  Table = {new Hand(flop)}; Adjusted Score = {actualScore}");            
         }
 
     }

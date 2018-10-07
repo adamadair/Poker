@@ -94,7 +94,52 @@ namespace PokerTests.TexasHoldemBot
             
             Assert.False(deck.Contains(Card.CA)); // Verify the ace of clubs is gone
         }
-        
-        
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
+        public void CountPairsTest()
+        {
+            var r1 = Deck.Pairs(new[] {Card.C2, Card.D2, Card.DA, Card.H7, Card.SQ});
+            Assert.AreEqual(1,r1.Count);
+            Assert.AreEqual(r1[0], CardValue.Two);
+
+            var r2 = Deck.Pairs(new[] { Card.C2, Card.D2, Card.DA, Card.HA, Card.SQ });
+            Assert.AreEqual(2, r2.Count);
+            Assert.IsTrue(r2.Contains(CardValue.Two));
+            Assert.IsTrue(r2.Contains(CardValue.Ace));
+
+            var r3 = Deck.Pairs(new[] { Card.C2, Card.D3, Card.DA, Card.HK, Card.SQ });
+            Assert.AreEqual(0, r3.Count);
+
+            var r4 = Deck.Pairs(new[] { Card.C2, Card.D3, Card.DA});
+            Assert.AreEqual(0, r4.Count);           
+
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        [Test]
+        public void CountSuitsTest()
+        {
+            var r1 = Deck.Suited(new[] { Card.C2, Card.D2, Card.DA, Card.H7, Card.SQ });
+            Assert.AreEqual(1, r1[CardSuit.Clubs]);
+            Assert.AreEqual(2, r1[CardSuit.Diamonds]);
+            Assert.AreEqual(1, r1[CardSuit.Hearts]);
+            Assert.AreEqual(1, r1[CardSuit.Spades]);
+            Assert.AreEqual(1, r1.Count(c => c.Value == 2));
+            Assert.AreEqual(0, r1.Count(c => c.Value == 3));
+
+
+
+            var r2 = Deck.Suited(new[] { Card.D3, Card.D2, Card.DA, Card.HA, Card.SQ });
+            Assert.AreEqual(1, r2.Count(c => c.Value == 3));
+            Assert.AreEqual(CardSuit.Diamonds, r2.First(c => c.Value == 3).Key);
+
+
+        }
+
     }
 }
