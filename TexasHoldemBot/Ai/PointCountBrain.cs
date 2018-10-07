@@ -66,6 +66,7 @@ namespace TexasHoldemBot.Ai
         {
             int points = StartingPoints;
             Hand h = new Hand(State.Me.Cards);
+            Logger.Info($"Round #: {State.RoundNumber}");
             Logger.Info($"Getting preflop move, {h} = {points}");
             if (AmButton)
             {
@@ -292,7 +293,8 @@ namespace TexasHoldemBot.Ai
                 h = _evaluator.Evaluate(cardToEvaluate);
             }
             
-            Logger.Info($"Current hand: {h}; points = {points}");            
+            Logger.Info($"Current hand: {State.GetMyCards()}; points = {points}");
+            Logger.Info($"Pot = {Pot}");
             var probs = BrecherHandEvaluator.FlopProbabilities(State.Me.Cards, State.Table.TableCards);
             LogProbabilityArray(probs, "Flop");
             float betSize = 0.0f;
@@ -509,9 +511,10 @@ namespace TexasHoldemBot.Ai
             {
                 h = _evaluator.Evaluate(cardToEvaluate);
             }
-
-            Logger.Info($"Current hand: {h}; points = {points}");
-            var probs = BrecherHandEvaluator.FlopProbabilities(State.Me.Cards, State.Table.TableCards);
+            
+            Logger.Info($"Current hand: {State.GetMyCards()}; points = {points}");
+            Logger.Info($"Pot = {Pot}");
+            var probs = BrecherHandEvaluator.TurnProbabilities(State.Me.Cards, State.Table.TableCards);
             LogProbabilityArray(probs, "Flop");
             float betSize = 0.0f;
             if (ToCall > 0)
@@ -706,6 +709,11 @@ namespace TexasHoldemBot.Ai
         }
         public Move GetRiverMove()
         {
+            Logger.Info("");
+            Logger.Info(":: EVALUATE RIVER ::");
+            Logger.Info($"Current hand: {State.GetMyCards()}");
+            Logger.Info($"Pot = {Pot}");
+
             float winProb = WinningProbability;
             float betSize = 0.0f;
             if (ToCall > 0)

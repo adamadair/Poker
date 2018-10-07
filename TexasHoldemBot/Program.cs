@@ -5,9 +5,9 @@ namespace TexasHoldemBot
 {
     class Program
     {
-        public const string BOT_NAME_S = "TexasHoldemBot";
+        public const string BOT_NAME_S = "EvilHoldemBot";
         public const int MAJOR_VERSION_I = 1;
-        public const int MINOR_VERSION_I = 2;
+        public const int MINOR_VERSION_I = 7;
 
         public static string Version => $"{BOT_NAME_S} v{MAJOR_VERSION_I}.{MINOR_VERSION_I}";
 

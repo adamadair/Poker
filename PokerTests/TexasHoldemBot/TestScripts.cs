@@ -65,5 +65,54 @@ action move 2000
 Output from your bot: ""fold""
 update player1 wins 120";
 
+        
+        public const string SCRIPT2_S = @"settings player_names player0,player1
+settings your_bot player0
+settings timebank 2000
+settings time_per_move 100
+settings initial_stack 2000
+settings initial_big_blind 60
+settings hands_per_blind_level 10
+update game round 13
+update game small_blind 40
+update game big_blind 80
+update game on_button player1
+update player0 chips 1940
+update player1 chips 2060
+update game bet_round preflop
+update player0 hand Jc,Kd
+update player1 move call
+update player0 bet 80
+update player1 bet 80
+update player0 pot 160
+update player0 amount_to_call 0
+action move 2000
+update game bet_round flop
+update game table 9d,Td,4d
+update player0 bet 0
+update player1 bet 0
+update player0 pot 160
+update player0 amount_to_call 0
+action move 2000
+update player1 move check
+update game bet_round turn
+update game table 9d,Td,4d,Qd
+update player0 bet 0
+update player1 bet 0
+update player0 pot 160
+update player0 amount_to_call 0
+action move 2000
+update player1 move check
+update game bet_round river
+update game table 9d,Td,4d,Qd,8h
+update player0 bet 0
+update player1 bet 0
+update player0 pot 160
+update player0 amount_to_call 0
+action move 2000
+update player1 move call
+update player1 hand Js,2s
+update player0 wins 3880";
+        
     }
 }
