@@ -347,7 +347,7 @@ namespace TexasHoldemBot.Poker
 
         public override bool Equals(object obj)
         {
-            return obj is Card compareCard && _v.Equals(compareCard._v);
+            return obj.GetType() == typeof(Card) && _v.Equals(((Card) obj)._v);            
         }
 
         public override int GetHashCode()

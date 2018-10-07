@@ -43,7 +43,7 @@ namespace TexasHoldemBot.Poker
                 }
                 return _comparer;
             }
-            set => _comparer = value;
+            set { _comparer = value; }
         }
 
         public Hand()
