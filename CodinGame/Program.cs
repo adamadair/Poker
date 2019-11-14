@@ -12,82 +12,50 @@
     KodeMonkey knows Poker
      
  **/
+
 using System;
 using System.Linq;
 using System.Text;
 using System.Collections.Generic;
 
 
-class Solution
+internal class Solution
 {
-    static void Main(string[] args)
+    private static void Main(string[] args)
     {
         string holeCardsPlayer1 = Console.ReadLine();
-        
+
         string holeCardsPlayer2 = Console.ReadLine();
         string communityCards = Console.ReadLine();
 
-        // Write an action using Console.WriteLine()
-        // To debug: Console.Error.WriteLine("Debug messages...");
         var table = new Hand(communityCards);
         var h1 = new Hand(holeCardsPlayer1);
         var h2 = new Hand(holeCardsPlayer2);
         h1.Add(table.Cards);
         h2.Add(table.Cards);
         var evaluator = new BrecherHandEvaluator();
-        var comparer = new HandComparer(evaluator);
-        var result = comparer.Compare(h1, h2);
+        var comparer = new NewHandComparer();
+        int result = comparer.Compare(h1, h2);
         if (result < 0)
         {
-            WriteOutput(evaluator.Evaluate(h2),2, h2);
+            WriteOutput(evaluator.Evaluate(h2), 2, h2.GetHandCards(evaluator));
+        }
+        else if (result > 0)
+        {
+            WriteOutput(evaluator.Evaluate(h1), 1, h1.GetHandCards(evaluator));
         }
         else
         {
-            WriteOutput(evaluator.Evaluate(h1),1, h1);
+            Console.WriteLine("DRAW");
         }
-        
-        Console.WriteLine("answer");
     }
 
-    static void WriteOutput(PokerHand h, int playerNum, Hand hand)
+    private static void WriteOutput(PokerHand h, int playerNum, Card[] c)
     {
-        Console.WriteLine($"{playerNum} {PokerHandToString(h)} {hand.ToString()}");
+        Console.WriteLine($"{playerNum} {PokerHandToString(h)} {Hand.ToCodinGameString(c)}");
     }
 
-//    static string HandCardValues(PokerHand h, Hand hand)
-//    {
-//        switch (h)
-//        {
-//            case PokerHand.HighCard:
-//                break;
-//            case PokerHand.OnePair:
-//                break;
-//            case PokerHand.TwoPair:
-//                break;
-//            case PokerHand.ThreeOfAKind:
-//                break;
-//            case PokerHand.Straight:
-//                break;
-//            case PokerHand.Flush:
-//                break;
-//            case PokerHand.FullHouse:
-//                break;
-//            case PokerHand.FourOfAKind:
-//                break;
-//            case PokerHand.StraightFlush:
-//                break;
-//            case PokerHand.RoyalFlush:
-//                break;
-//            default:
-//                throw new ArgumentOutOfRangeException(nameof(h), h, null);
-//        }    
-//    }
-//
-//    static string HighCard(Hand h)
-//    {
-//        
-//    }
-    
+
 /*
  * HANDS
     A player's hand is the best 5 card-card combination from the 7 card combination of their own 2 hole cards with 
@@ -103,7 +71,7 @@ class Solution
 • PAIR - 2 cards of matching values and 3 kickers*, e.g. 66T42
 • HIGH_CARD - The absence of any better hand means that the highest value card counts with 4 kickers*, e.g.
  */
-    static string PokerHandToString(PokerHand h)
+    private static string PokerHandToString(PokerHand h)
     {
         switch (h)
         {
@@ -122,7 +90,7 @@ class Solution
             case PokerHand.FullHouse:
                 return "FULL_HOUSE";
             case PokerHand.FourOfAKind:
-                return "FOUR_OF_A_KING";
+                return "FOUR_OF_A_KIND";
             case PokerHand.StraightFlush:
                 return "STRAIGHT_FLUSH";
             case PokerHand.RoyalFlush:
@@ -150,6 +118,7 @@ public enum PokerHand
     StraightFlush,
     RoyalFlush
 }
+
 /// <summary>
 /// Card represents a single playing card from a Deck of playing cards
 /// that are used to play Poker. A card is identified by its Suit and 
@@ -158,6 +127,7 @@ public enum PokerHand
 public class Card
 {
     #region Static Card Members
+
     /*
      * All the cards that ever need to be made get initialized as static
      * so we never have to make new ones, reducing garbage collection.
@@ -215,7 +185,7 @@ public class Card
     public static Card DK = new Card("KD");
     public static Card DA = new Card("AD");
     public static Dictionary<string, Card> Cards { get; }
-    
+
     static Card()
     {
         Cards = new Dictionary<string, Card>
@@ -272,19 +242,21 @@ public class Card
             {"QD", DQ},
             {"KD", DK},
             {"AD", DA}
-        };         
+        };
     }
 
     public static Card Parse(string card)
     {
         return Cards[card.ToUpper()];
     }
+
     #endregion
 
     private readonly Tuple<CardSuit, CardValue> _v;
-    public Card (CardSuit cs, CardValue cr)
+
+    public Card(CardSuit cs, CardValue cr)
     {
-        _v = new Tuple<CardSuit, CardValue>(cs, cr);            
+        _v = new Tuple<CardSuit, CardValue>(cs, cr);
     }
 
     /// <summary>
@@ -299,7 +271,7 @@ public class Card
     /// the string "JJ"
     /// </summary>
     /// <param name="cardString">Card string.</param>
-    private Card (string cardString)
+    private Card(string cardString)
     {
         _v = SetCardValues(cardString);
     }
@@ -313,15 +285,18 @@ public class Card
     /// <param name="val">Value.</param>
     private Tuple<CardSuit, CardValue> SetCardValues(string val)
     {
-        if(val.Length!=2)
+        if (val.Length != 2)
+        {
             throw new PokerException("Incorrect length for card string. Must be 2 characters.");
-        var cr = val.Substring(0,1).ToUpper();
-        var cs = val.Substring(1,1).ToUpper();
+        }
+
+        string cr = val.Substring(0, 1).ToUpper();
+        string cs = val.Substring(1, 1).ToUpper();
         CardSuit suit;
         CardValue value;
         switch (cr)
         {
-            case "2": 
+            case "2":
                 value = CardValue.Two;
                 break;
             case "3":
@@ -363,6 +338,7 @@ public class Card
             default:
                 throw new PokerException(cr + " is an invalid card rank.");
         }
+
         switch (cs)
         {
             case "C":
@@ -391,13 +367,13 @@ public class Card
     /// <returns></returns>
     public bool IsConnected(Card c)
     {
-        CardValue v = c.Value;
+        var v = c.Value;
         switch (Value)
         {
             case CardValue.Two:
-                return (v == CardValue.Ace || v == CardValue.Three);
+                return v == CardValue.Ace || v == CardValue.Three;
             case CardValue.Ace:
-                return (v == CardValue.King || v == CardValue.Two);
+                return v == CardValue.King || v == CardValue.Two;
             default:
                 return Math.Abs((int) Value - (int) v) == 1;
         }
@@ -410,7 +386,7 @@ public class Card
     /// <returns>The long string.</returns>
     public string ToLongString()
     {
-        return string.Format ("{1} of {0}", Suit.ToString(), Value.ToString());  
+        return string.Format("{1} of {0}", Suit.ToString(), Value.ToString());
     }
 
     /// <summary>
@@ -424,9 +400,9 @@ public class Card
     /// A joker is a special case string "JJ"
     /// </summary>
     /// <returns>A <see cref="System.String"/> that represents the current <see cref="Card"/>.</returns>
-    public override string ToString ()
-    {            
-        StringBuilder sb = new StringBuilder ();
+    public override string ToString()
+    {
+        var sb = new StringBuilder();
         switch (Value)
         {
             case CardValue.Two:
@@ -471,6 +447,7 @@ public class Card
             default:
                 throw new PokerException("Card to String error, unknown rank");
         }
+
         switch (Suit)
         {
             case CardSuit.Clubs:
@@ -488,12 +465,13 @@ public class Card
             default:
                 throw new PokerException("Card to string error, unknown suit");
         }
-        return sb.ToString ();
+
+        return sb.ToString();
     }
 
     public override bool Equals(object obj)
     {
-        return obj.GetType() == typeof(Card) && _v.Equals(((Card) obj)._v);            
+        return obj.GetType() == typeof(Card) && _v.Equals(((Card) obj)._v);
     }
 
     public override int GetHashCode()
@@ -505,12 +483,33 @@ public class Card
 /// <summary>
 /// Card suit.
 /// </summary>
-public enum CardSuit { Clubs, Diamonds, Hearts, Spades }
+public enum CardSuit
+{
+    Clubs,
+    Diamonds,
+    Hearts,
+    Spades
+}
 
 /// <summary>
 /// Card rank.
 /// </summary>
-public enum CardValue { Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Jack, Queen, King, Ace }
+public enum CardValue
+{
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    Jack,
+    Queen,
+    King,
+    Ace
+}
 
 /// <summary>
 /// Convenience methods for dealing with an entire deck of cards.
@@ -540,10 +539,7 @@ public static class Deck
     public static List<Card> GetSubDeck(IEnumerable<Card> outs)
     {
         var l = new List<Card>(_deck);
-        foreach (Card c in outs)
-        {
-            l.Remove(c);
-        }
+        foreach (var c in outs) l.Remove(c);
         return l;
     }
 
@@ -554,21 +550,15 @@ public static class Deck
     /// <returns>list of card values</returns>
     public static List<CardValue> Pairs(IEnumerable<Card> cards)
     {
-        
-        int[] varray = new[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        List<CardValue> l = new List<CardValue>();
-        foreach (var c in cards)
-        {
-            varray[(int) c.Value]+=1;
-        }
+        var varray = new[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        var l = new List<CardValue>();
+        foreach (var c in cards) varray[(int) c.Value] += 1;
 
         foreach (var v in Enum.GetValues(typeof(CardValue)))
-        {
             if (varray[(int) v] > 1)
             {
-                l.Add((CardValue)v);
+                l.Add((CardValue) v);
             }
-        }
 
         return l;
     }
@@ -578,7 +568,7 @@ public static class Deck
     /// </summary>
     /// <param name="cards">The card collection in question</param>
     /// <returns>Dictionary of suit counts</returns>
-    public static Dictionary<CardSuit,int> Suited(IEnumerable<Card> cards)
+    public static Dictionary<CardSuit, int> Suited(IEnumerable<Card> cards)
     {
         var r = new Dictionary<CardSuit, int>
         {
@@ -587,12 +577,9 @@ public static class Deck
             {CardSuit.Hearts, 0},
             {CardSuit.Spades, 0}
         };
-        foreach (var c in cards)
-        {
-            r[c.Suit] += 1;
-        }
+        foreach (var c in cards) r[c.Suit] += 1;
         return r;
-    }        
+    }
 
     /// <summary>
     /// Get all two card combinations from a collection of cards
@@ -602,213 +589,43 @@ public static class Deck
     public static IEnumerable<Tuple<Card, Card>> GetTwoCardCombinations(IEnumerable<Card> cards)
     {
         var l = new List<Tuple<Card, Card>>();
-        Card[] a = cards.ToArray();
+        var a = cards.ToArray();
         for (var i = 0; i < a.Length - 1; ++i)
-        {
-            for (var j = i + 1; j < a.Length; ++j)
-            {
-                l.Add(new Tuple<Card, Card>(a[i], a[j]));
-            }
-        }
+        for (int j = i + 1; j < a.Length; ++j)
+            l.Add(new Tuple<Card, Card>(a[i], a[j]));
         return l;
     }
 }
 
-/// <inheritdoc />
-/// <summary>
-/// A comparer class that compares two hands of poker.
-/// </summary>
-public class HandComparer : IComparer<Hand>
+
+public class NewHandComparer : IComparer<Hand>
 {
-    readonly IPokerHandEvaluator _evaluator;
-
-    public HandComparer(IPokerHandEvaluator evaluator)
+    private readonly BrecherHandEvaluator eval;
+    public NewHandComparer()
     {
-        if (evaluator == null) throw new PokerException("Evaluator can not be null.");
-        _evaluator = evaluator;
+        eval = new BrecherHandEvaluator();
     }
-
-    /// <inheritdoc />
-    /// <summary>
-    /// Compares to hands of poker.
-    /// </summary>
-    /// <param name="x">one hand</param>
-    /// <param name="y">the other hand</param>
-    /// <returns>
-    /// Less than zero - x is less than y.
-    /// Zero - x equals y.
-    /// Greater than zero - x is greater than y.
-    /// </returns>
     public int Compare(Hand x, Hand y)
     {
-        PokerHand xHand = _evaluator.Evaluate(x);
-        PokerHand yHand = _evaluator.Evaluate(y);
-        if (xHand < yHand)
+        var h1 = x.GetHandCards(eval);
+        var h2 = y.GetHandCards(eval);
+        var s1 = BrecherHandEvaluator.GetHandStrength(new Hand(h1));
+        var s2 = BrecherHandEvaluator.GetHandStrength(new Hand(h2));
+        if (s1 < s2)
+        {
             return -1;
-        if (xHand > yHand)
-            return 1;
-        switch (xHand)
-        {
-            case PokerHand.HighCard:
-                return HighCardBreak(x, y);
-            case PokerHand.OnePair:
-                return PairBreak(x, y);
-            case PokerHand.TwoPair:
-                return TwoPairBreak(x, y);
-            case PokerHand.ThreeOfAKind:
-                return ThreeOfAKindBreak(x, y);
-            case PokerHand.FourOfAKind:
-                return FourOfAKindBreak(x, y);
-            case PokerHand.FullHouse:
-                return ThreeOfAKindBreak(x, y);
-            case PokerHand.Straight:
-                return StraightBreak(x, y);
-            case PokerHand.Flush:
-                return FlushBreak(x, y);
-            case PokerHand.StraightFlush:
-                return StraightBreak(x, y);
         }
 
-        return 0;
-    }
-
-    private int HighCardBreak(Hand x, Hand y)
-    {
-        Card[] xHand = x.Cards.OrderByDescending(c => c.Value).ToArray();
-        Card[] yHand = y.Cards.OrderByDescending(c => c.Value).ToArray();
-        return CompareHighCards(xHand, yHand);
-    }
-
-    private static int CompareHighCards(IReadOnlyList<Card> xHand, IReadOnlyList<Card> yHand)
-    {
-        for (var i = 0; i < xHand.Count; ++i)
+        if (s1 > s2)
         {
-            Card xCard = xHand[i];
-            if (i >= yHand.Count) continue;
-            Card yCard = yHand[i];
-            if (xCard.Value < yCard.Value) return -1;
-            if (xCard.Value > yCard.Value) return 1;
-        }
-
-        return 0;
-    }
-
-    private int PairBreak(Hand x, Hand y)
-    {
-        var xHand = new List<Card>(x.Cards.OrderByDescending(c => c.Value));
-        var yHand = new List<Card>(y.Cards.OrderByDescending(c => c.Value));
-        IGrouping<CardValue, Card>[] xPair = Pairs(xHand).ToArray();
-        IGrouping<CardValue, Card>[] yPair = Pairs(yHand).ToArray();
-        if (xPair.First().Key == yPair.First().Key)
-        {
-            foreach (Card xp in xPair.First())
-            {
-                xHand.Remove(xp);
-            }
-
-            foreach (Card yp in yPair.First())
-            {
-                yHand.Remove(yp);
-            }
-
-            return CompareHighCards(GetCardArray(xHand, 3), GetCardArray(yHand, 3));
-        }
-
-        if (xPair.First().Key > yPair.First().Key) return 1;
-        return -1;
-    }
-
-    /// <summary>
-    /// This is going to create an 
-    /// </summary>
-    /// <param name="cards"></param>
-    /// <param name="n"></param>
-    /// <returns></returns>
-    private static Card[] GetCardArray(IEnumerable<Card> cards, int n)
-    {
-        Card[] enumerable = cards as Card[] ?? cards.ToArray();
-        return n > enumerable.Count() ? enumerable.ToArray() : enumerable.Take(n).ToArray();
-    }
-
-    private IEnumerable<IGrouping<CardValue, Card>> GroupByValue(IEnumerable<Card> cards)
-    {
-        return cards.GroupBy(card => card.Value);
-    }
-
-    private IEnumerable<IGrouping<CardValue, Card>> Pairs(IEnumerable<Card> cards)
-    {
-        return GroupByValue(cards).Where(group => group.Count() == 2).OrderByDescending(g => g.Key);
-    }
-
-    private IEnumerable<IGrouping<CardValue, Card>> Trips(IEnumerable<Card> cards)
-    {
-        return GroupByValue(cards).Where(group => group.Count() == 3).OrderByDescending(g => g.Key);
-    }
-
-    private IEnumerable<IGrouping<CardValue, Card>> Quad(IEnumerable<Card> cards)
-    {
-        return GroupByValue(cards).Where(group => group.Count() == 4).OrderByDescending(g => g.Key);
-    }
-
-    private int TwoPairBreak(Hand x, Hand y)
-    {
-        var xHand = new List<Card>(x.Cards.OrderBy(c => c.Value));
-        var yHand = new List<Card>(y.Cards.OrderBy(c => c.Value));
-        IGrouping<CardValue, Card>[] xPair = Pairs(xHand).ToArray();
-        IGrouping<CardValue, Card>[] yPair = Pairs(yHand).ToArray();
-        for (var i = 0; i < 2; ++i)
-        {
-            if (xPair[0].Key == yPair[0].Key) continue;
-            if (xPair[0].Key < yPair[0].Key)
-                return -1;
             return 1;
         }
 
-        if (xHand[4].Value < yHand[4].Value)
-            return -1;
-        return xHand[4].Value > yHand[4].Value ? 1 : 0;
-    }
-
-    private int ThreeOfAKindBreak(Hand x, Hand y)
-    {
-        CardValue xTripVal = Trips(x.Cards).First().Key;
-        CardValue yTripVal = Trips(y.Cards).First().Key;
-        if (xTripVal < yTripVal) return -1;
-        return 1;
-    }
-
-    private int FourOfAKindBreak(Hand x, Hand y)
-    {
-        CardValue xQuadVal = Quad(x.Cards).First().Key;
-        CardValue yQuadVal = Quad(y.Cards).First().Key;
-        if (xQuadVal < yQuadVal) return -1;
-        return 1;
-    }
-
-    private static int StraightBreak(Hand x, Hand y)
-    {
-        Card[] xHand = x.Cards.OrderByDescending(c => c.Value).ToArray();
-        xHand = TrimLowAce(xHand);
-        Card[] yHand = y.Cards.OrderByDescending(c => c.Value).ToArray();
-        yHand = TrimLowAce(yHand);
-        return CompareHighCards(xHand, yHand);
-    }
-
-    private static Card[] TrimLowAce(Card[] ca)
-    {
-        if (ca[0].Value == CardValue.Ace && ca[4].Value == CardValue.Two)
-        {
-            return ca.Skip(1).ToArray();
-        }
-
-        return ca;
-    }
-
-    private int FlushBreak(Hand x, Hand y)
-    {
-        return HighCardBreak(x, y);
+        return 0;
     }
 }
+
+
 
 /// <summary>
 /// A poker hand. A valid poker hand must have at least 5 cards.
@@ -819,19 +636,22 @@ public class Hand : IComparable<Hand>
 {
     private readonly List<Card> _cards;
 
-    private static HandComparer _comparer;
-        
-    public static HandComparer Comparer {
+    private static NewHandComparer _comparer;
+
+    public static NewHandComparer Comparer
+    {
         get
         {
             if (_comparer == null)
             {
-                _comparer = new HandComparer(new BrecherHandEvaluator());
+                _comparer = new NewHandComparer();
             }
+
             return _comparer;
         }
-        set { _comparer = value; }
+        set => _comparer = value;
     }
+
 
     public Hand()
     {
@@ -847,10 +667,7 @@ public class Hand : IComparable<Hand>
     public Hand(string handCards)
     {
         _cards = new List<Card>();
-        foreach (var c in handCards.Split(" ".ToCharArray()))
-        {
-            Add(Card.Parse(c));
-        }
+        foreach (string c in handCards.Split(" ".ToCharArray())) Add(Card.Parse(c));
         _cards.Sort((card, card1) => card1.Value.CompareTo(card.Value));
     }
 
@@ -859,6 +676,11 @@ public class Hand : IComparable<Hand>
     public void Discard(Card card)
     {
         _cards.Remove(card);
+    }
+
+    public int SuitCount(CardSuit s)
+    {
+        return _cards.Count(card => card.Suit == s);
     }
 
     public void Add(Card card)
@@ -878,14 +700,33 @@ public class Hand : IComparable<Hand>
         _cards.Clear();
     }
 
+    public Card[] TopNot(CardValue v, int num=1)
+    {
+        var l = new List<Card>();
+
+        foreach (var card in _cards)
+        {
+            if (card.Value != v)
+            {
+                l.Add(card);
+            }
+
+            if (l.Count == num)
+                break;
+        }
+
+        return l.ToArray();
+    }
+
     public override string ToString()
     {
         var sb = new StringBuilder();
-        foreach (Card c in _cards)
+        foreach (var c in _cards)
         {
             sb.Append(" ");
             sb.Append(c);
         }
+
         return "[" + sb.ToString().TrimStart() + "]";
     }
 
@@ -893,14 +734,302 @@ public class Hand : IComparable<Hand>
     {
         return Comparer.Compare(this, other);
     }
+
+    // Retrieve the cards that make a hand
+    public Card[] GetHandCards(IPokerHandEvaluator evaluator)
+    {
+        if (_cards.Count < 5)
+        {
+            return new Card[0];
+        }
+
+        switch (evaluator.Evaluate(this))
+        {
+            case PokerHand.HighCard:
+                return GetHighCardHand();
+            case PokerHand.OnePair:
+                return GetPairHand();
+            case PokerHand.TwoPair:
+                return GetTwoPairHand();
+            case PokerHand.ThreeOfAKind:
+                return GetThreeOfAKindCards();
+            case PokerHand.Straight:
+                return GetStraightCards();
+            case PokerHand.Flush:
+                return GetFlushCards();
+            case PokerHand.FullHouse:
+                return GetFullHouseCards();
+            case PokerHand.FourOfAKind:
+                return GetFourOfAKindCards();
+            case PokerHand.StraightFlush:
+                return GetStraightFlushCards();
+            case PokerHand.RoyalFlush:
+                return GetStraightFlushCards();
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+        return new Card[0];
+    }
+
+    private Card[] GetHighCardHand()
+    {
+        var l = new List<Card>
+        {
+            _cards[0], _cards[1], _cards[2], _cards[3], _cards[4]
+        };
+        // return the first five cards in the list
+        return l.ToArray();
+    }
+
+    private Card[] GetPairHand()
+    {
+        var t = new List<Card>();
+        t.AddRange(_cards);
+        var l = new List<Card>();
+        for (var i = 0; i < t.Count - 1; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i+1]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                break;
+            }
+        }
+        l.Add(t[0]);
+        l.Add(t[1]);
+        l.Add(t[2]);
+        return l.ToArray();
+    }
+    private Card[] GetTwoPairHand()
+    {
+        var t = new List<Card>();
+        t.AddRange(_cards);
+        var l = new List<Card>();
+        var pcount = 0;
+        for (var i = 0; i < t.Count - 1; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i + 1]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                pcount++;
+                if(pcount==2)
+                    break;
+            }
+        }
+        l.Add(t[0]);
+        return l.ToArray();
+    }
+
+    private Card[] GetFlushCards()
+    {
+        var l = new List<Card>();
+        var s = CardSuit.Clubs;
+        if (SuitCount(CardSuit.Diamonds) >= 5)
+        {
+            s = CardSuit.Diamonds;
+        }
+        else if (SuitCount(CardSuit.Hearts) >= 5)
+        {
+            s = CardSuit.Hearts;
+        }
+        else if (SuitCount(CardSuit.Spades) >= 5)
+        {
+            s = CardSuit.Spades;
+        }
+        foreach (var card in _cards)
+        {
+            if (card.Suit == s)
+            {
+                l.Add(card);
+            }
+            if(l.Count==5)
+                break;
+        }
+
+        return l.ToArray();
+    }
+
+    private Card[] GetThreeOfAKindCards()
+    {
+        var t = new List<Card>();
+        t.AddRange(_cards);
+        var l = new List<Card>();
+        for (var i = 0; i < t.Count - 2; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value && t[i + 1].Value == t[i + 2].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i + 1]);
+                l.Add(t[i + 2]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                t.Remove(l[2]);
+                break;
+            }
+        }
+        l.Add(t[0]);
+        l.Add(t[1]);
+        return l.ToArray();
+    }
+
+    private Card[] GetFourOfAKindCards()
+    {
+        var t = new List<Card>();
+        t.AddRange(_cards);
+        var l = new List<Card>();
+        for (var i = 0; i < t.Count - 3; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value && t[i + 1].Value == t[i + 2].Value && t[i + 2].Value == t[i + 3].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i + 1]);
+                l.Add(t[i + 2]);
+                l.Add(t[i + 3]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                t.Remove(l[2]);
+                t.Remove(l[3]);
+                break;
+            }
+        }
+        l.Add(t[0]);
+        return l.ToArray();
+    }
+
+    public Card[] GetStraightCards()
+    {
+        var l = new List<Card>();
+        l.Add(_cards[0]);
+        for (var i = 1; i < _cards.Count; ++i)
+        {
+            var c = _cards[i];
+            if (l.Last().IsConnected(c))
+            {
+                l.Add(c);
+            }
+            else
+            {
+                l.Clear();
+                l.Add(c);
+            }
+
+            if (l.Count == 5)
+            {
+                break;
+            }
+        }
+
+        if (l.Count == 4)
+        {
+            l.Add(_cards[0]);
+        }
+
+        return l.ToArray();
+    }
+
+    public Card[] GetFullHouseCards()
+    {
+        var t = new List<Card>();
+        t.AddRange(_cards);
+        var l = new List<Card>();
+        for (var i = 0; i < t.Count - 2; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value && t[i + 1].Value == t[i + 2].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i + 1]);
+                l.Add(t[i + 2]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                t.Remove(l[2]);
+                break;
+            }
+        }
+        for (var i = 0; i < t.Count - 1; ++i)
+        {
+            if (t[i].Value == t[i + 1].Value)
+            {
+                l.Add(t[i]);
+                l.Add(t[i + 1]);
+                t.Remove(l[0]);
+                t.Remove(l[1]);
+                break;
+            }
+        }
+        return l.ToArray();
+    }
+
+    public Card[] GetStraightFlushCards()
+    {
+        var l = new List<Card>();
+        var s = CardSuit.Clubs;
+        if (SuitCount(CardSuit.Diamonds) >= 5)
+        {
+            s = CardSuit.Diamonds;
+        }
+        else if (SuitCount(CardSuit.Hearts) >= 5)
+        {
+            s = CardSuit.Hearts;
+        }
+        else if (SuitCount(CardSuit.Spades) >= 5)
+        {
+            s = CardSuit.Spades;
+        }
+
+        var first = _cards.FindIndex(card => card.Suit == s);
+        l.Add(_cards[first]);
+        for (var i = first + 1; i < _cards.Count; ++i)
+        {
+            var c = _cards[i];
+            if (l.Last().IsConnected(c) && c.Suit==l.Last().Suit)
+            {
+                l.Add(c);
+            }
+            else
+            {
+                l.Clear();
+                l.Add(c);
+            }
+
+            if (l.Count == 5)
+            {
+                break;
+            }
+        }
+
+        if (l.Count == 4)
+        {
+            l.Add(_cards[0]);
+        }
+
+        return l.ToArray();
+    }
+
+    public static string ToCodinGameString(IEnumerable<Card> cards)
+    {
+        var sb = new StringBuilder();
+        foreach (var card in cards)
+        {
+            sb.Append(card.ToString()[0]);
+        }
+        return sb.ToString();
+    }
+
+    
 }
 
 public class PokerException : Exception
 {
-    public PokerException (string msg):base(msg)
+    public PokerException(string msg) : base(msg)
     {
     }
 }
+
 /// <summary>
 /// The interface for poker hand evaluator. By extracting the interface leaves open the
 /// possibility of introducing different and perhaps more efficient methods of evaluating
@@ -923,32 +1052,58 @@ public interface IPokerHandEvaluator
 /// </summary>
 public class BrecherHandEvaluator : IPokerHandEvaluator
 {
+    
     public PokerHand Evaluate(Hand h)
-    {            
+    {
         int strength = GetHandStrength(h);
         if (strength < BrecherHandEval.PAIR)
+        {
             return PokerHand.HighCard;
+        }
+
         if (strength < BrecherHandEval.TWO_PAIR)
+        {
             return PokerHand.OnePair;
+        }
+
         if (strength < BrecherHandEval.THREE_OF_A_KIND)
+        {
             return PokerHand.TwoPair;
+        }
+
         if (strength < BrecherHandEval.STRAIGHT)
+        {
             return PokerHand.ThreeOfAKind;
+        }
+
         if (strength < BrecherHandEval.FLUSH)
+        {
             return PokerHand.Straight;
+        }
+
         if (strength < BrecherHandEval.FULL_HOUSE)
+        {
             return PokerHand.Flush;
+        }
+
         if (strength < BrecherHandEval.FOUR_OF_A_KIND)
+        {
             return PokerHand.FullHouse;
+        }
+
         if (strength < BrecherHandEval.STRAIGHT_FLUSH)
+        {
             return PokerHand.FourOfAKind;
+        }
 
         if (h.Cards.Any(c => c.Value == CardValue.Ten) &&
             h.Cards.Any(c => c.Value == CardValue.Jack) &&
             h.Cards.Any(c => c.Value == CardValue.Queen) &&
             h.Cards.Any(c => c.Value == CardValue.King) &&
             h.Cards.Any(c => c.Value == CardValue.Ace))
+        {
             return PokerHand.RoyalFlush;
+        }
 
         return PokerHand.StraightFlush;
     }
@@ -956,21 +1111,45 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
     public static PokerHand StrengthToPokerHand(int strength)
     {
         if (strength < BrecherHandEval.PAIR)
+        {
             return PokerHand.HighCard;
+        }
+
         if (strength < BrecherHandEval.TWO_PAIR)
+        {
             return PokerHand.OnePair;
+        }
+
         if (strength < BrecherHandEval.THREE_OF_A_KIND)
+        {
             return PokerHand.TwoPair;
+        }
+
         if (strength < BrecherHandEval.STRAIGHT)
+        {
             return PokerHand.ThreeOfAKind;
+        }
+
         if (strength < BrecherHandEval.FLUSH)
+        {
             return PokerHand.Straight;
+        }
+
         if (strength < BrecherHandEval.FULL_HOUSE)
+        {
             return PokerHand.Flush;
+        }
+
         if (strength < BrecherHandEval.FOUR_OF_A_KIND)
+        {
             return PokerHand.FullHouse;
+        }
+
         if (strength < BrecherHandEval.STRAIGHT_FLUSH)
+        {
             return PokerHand.FourOfAKind;
+        }
+
         return PokerHand.StraightFlush;
     }
 
@@ -984,9 +1163,9 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
     /// </returns>
     public static float[] FlopProbabilities(IEnumerable<Card> playerCards, IEnumerable<Card> tableCards)
     {
-        float[] p = NewProbabilityArray();
+        var p = NewProbabilityArray();
         float[] counts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
-        float total = 0.0f;
+        var total = 0.0f;
         var knownCards = new List<Card>(playerCards);
         knownCards.AddRange(tableCards);
         long startingCode = knownCards.Sum(card => CardToCode(card));
@@ -995,7 +1174,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
         foreach (var possibility in possibilities)
         {
             long handCode = startingCode + CardToCode(possibility.Item1) + CardToCode(possibility.Item2);
-            PokerHand hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
+            var hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
             counts[(int) hand] += 1.0f;
             total += 1.0f;
         }
@@ -1006,10 +1185,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
             return p;
         }
 
-        for (int i = 0; i < p.Length; ++i)
-        {
-            p[i] = counts[i] / total;
-        }
+        for (var i = 0; i < p.Length; ++i) p[i] = counts[i] / total;
         return p;
     }
 
@@ -1023,9 +1199,9 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
     /// </returns>
     public static float[] TurnProbabilities(IEnumerable<Card> playerCards, IEnumerable<Card> tableCards)
     {
-        float[] p = NewProbabilityArray();
-        float[] counts = { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f };
-        float total = 0.0f;
+        var p = NewProbabilityArray();
+        float[] counts = {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
+        var total = 0.0f;
         var knownCards = new List<Card>(playerCards);
         knownCards.AddRange(tableCards);
         long startingCode = knownCards.Sum(card => CardToCode(card));
@@ -1033,8 +1209,8 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
         foreach (var possibility in possibities)
         {
             long handCode = startingCode + CardToCode(possibility);
-            PokerHand hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
-            counts[(int)hand] += 1.0f;
+            var hand = StrengthToPokerHand(BrecherHandEval.Hand7Eval(handCode));
+            counts[(int) hand] += 1.0f;
             total += 1.0f;
         }
 
@@ -1044,10 +1220,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
             return p;
         }
 
-        for (int i = 0; i < p.Length; ++i)
-        {
-            p[i] = counts[i] / total;
-        }
+        for (var i = 0; i < p.Length; ++i) p[i] = counts[i] / total;
         return p;
     }
 
@@ -1056,7 +1229,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
     /// of poker hand HIGH CARD to STRAIGHT FLUSH.
     /// </summary>
     /// <returns>Newly initialized 9 member float array</returns>
-    private static float [] NewProbabilityArray()
+    private static float[] NewProbabilityArray()
     {
         return new[] {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     }
@@ -1079,8 +1252,8 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
         int myStrength = BrecherHandEval.Hand7Eval(myHandCode);
         var remainingDeck = Deck.GetSubDeck(knownCards);
         var possibilities = Deck.GetTwoCardCombinations(remainingDeck);
-        float wins = 0.0f;
-        float total = 0.0f;
+        var wins = 0.0f;
+        var total = 0.0f;
         foreach (var possibility in possibilities)
         {
             total += 1.0f;
@@ -1119,7 +1292,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
             default:
                 return 0;
         }
-    }        
+    }
 
 
     public static long HandToCode(Hand h)
@@ -1168,6 +1341,7 @@ public class BrecherHandEvaluator : IPokerHandEvaluator
             case CardValue.King: return 11;
             case CardValue.Ace: return 12;
         }
+
         return 0;
     }
 }
@@ -1263,51 +1437,83 @@ internal static class BrecherHandEval
     public const int STRAIGHT_FLUSH = FOUR_OF_A_KIND + (1 << VALUE_SHIFT);
     public const int NO_8_LOW = STRAIGHT_FLUSH + (1 << VALUE_SHIFT);
 
-    private const int _ARRAY_SIZE = 0x1FC0 + 1;           // all combos of up to 7 of LS 13 bits on
+    private const int _ARRAY_SIZE = 0x1FC0 + 1; // all combos of up to 7 of LS 13 bits on
+
     /* Arrays for which index is bit mask of card ranks in hand: */
-    private static readonly int[] StraightValue = new int[_ARRAY_SIZE]; // Value(STRAIGHT) | (straight's high card rank-2 (3..12) << RANK_SHIFT_4); 0 if no straight
-    private static readonly int[] NbrOfRanks = new int[_ARRAY_SIZE];    // count of bits set
-    private static readonly int[] HiRank = new int[_ARRAY_SIZE];    // 4-bit card rank of highest bit set, right justified
-    private static readonly int[] HiUpTo5Ranks = new int[_ARRAY_SIZE];  // 4-bit card ranks of highest (up to) 5 bits set, right-justified
-    private static readonly int[] LoMaskOrNo8Low = new int[_ARRAY_SIZE];    // low-order 5 of the low-order 8 bits set, or NO_8_LOW; Ace is LS bit.
-    private static readonly int[] Lo3_8ObRanksMask = new int[_ARRAY_SIZE];   // bits other than lowest 3 8-or-better reset; Ace is LS bit.
+    private static readonly int[]
+        StraightValue =
+            new int[_ARRAY_SIZE]; // Value(STRAIGHT) | (straight's high card rank-2 (3..12) << RANK_SHIFT_4); 0 if no straight
+
+    private static readonly int[] NbrOfRanks = new int[_ARRAY_SIZE]; // count of bits set
+    private static readonly int[] HiRank = new int[_ARRAY_SIZE]; // 4-bit card rank of highest bit set, right justified
+
+    private static readonly int[]
+        HiUpTo5Ranks = new int[_ARRAY_SIZE]; // 4-bit card ranks of highest (up to) 5 bits set, right-justified
+
+    private static readonly int[]
+        LoMaskOrNo8Low = new int[_ARRAY_SIZE]; // low-order 5 of the low-order 8 bits set, or NO_8_LOW; Ace is LS bit.
+
+    private static readonly int[]
+        Lo3_8ObRanksMask = new int[_ARRAY_SIZE]; // bits other than lowest 3 8-or-better reset; Ace is LS bit.
 
     private static int FlushAndOrStraight7(int ranks, int c, int d, int h, int s)
     {
-
         int i, j;
 
         if ((j = NbrOfRanks[c]) > 7 - 5)
         {
             // there's either a club flush or no flush
             if (j >= 5)
+            {
                 if ((i = StraightValue[c]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[c];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
-        else if ((j += (i = NbrOfRanks[d])) > 7 - 5)
+        else if ((j += i = NbrOfRanks[d]) > 7 - 5)
         {
             if (i >= 5)
+            {
                 if ((i = StraightValue[d]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[d];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
-        else if ((j += (i = NbrOfRanks[h])) > 7 - 5)
+        else if ((j += i = NbrOfRanks[h]) > 7 - 5)
         {
             if (i >= 5)
+            {
                 if ((i = StraightValue[h]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[h];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
         else
             /* total cards in other suits <= 7-5: spade flush: */
         if ((i = StraightValue[s]) == 0)
+        {
             return FLUSH | HiUpTo5Ranks[s];
+        }
         else
-            return (STRAIGHT_FLUSH - STRAIGHT) + i;
+        {
+            return STRAIGHT_FLUSH - STRAIGHT + i;
+        }
+
         return StraightValue[ranks];
     }
 
@@ -1320,14 +1526,13 @@ internal static class BrecherHandEval
          * 13 bits are significant.  Get the respective fields into variables.
          * We don't care which suit is which; we arbitrarily call them c,d,h,s.
          */
-        var c = (int)hand & 0x1FFF;
-        var d = (int)((ulong)hand >> 16) & 0x1FFF;
-        var h = (int)((ulong)hand >> 32) & 0x1FFF;
-        var s = (int)((ulong)hand >> 48) & 0x1FFF;
+        int c = (int) hand & 0x1FFF;
+        int d = (int) ((ulong) hand >> 16) & 0x1FFF;
+        int h = (int) ((ulong) hand >> 32) & 0x1FFF;
+        int s = (int) ((ulong) hand >> 48) & 0x1FFF;
 
         switch (NbrOfRanks[ranks = c | d | h | s])
         {
-
             case 2:
                 /*
                  * quads with trips kicker
@@ -1346,16 +1551,31 @@ internal static class BrecherHandEval
                 {
                     /* two trips (full house) with non-playing singleton */
                     if (NbrOfRanks[i = c & d] != 2)
+                    {
                         if (NbrOfRanks[i = c & h] != 2)
+                        {
                             if (NbrOfRanks[i = c & s] != 2)
+                            {
                                 if (NbrOfRanks[i = d & h] != 2)
+                                {
                                     if (NbrOfRanks[i = d & s] != 2)
+                                    {
                                         i = h & s; /* bits for the trips */
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     return FULL_HOUSE | (HiUpTo5Ranks[i] << _RANK_SHIFT_3);
                 }
+
                 if ((j = c & d & h & s) != 0) /* bit for quads */
-                                              /* quads with pair and singleton */
+                    /* quads with pair and singleton */
+                {
                     return FOUR_OF_A_KIND | (HiRank[j] << _RANK_SHIFT_4) | (HiRank[ranks ^ j] << _RANK_SHIFT_3);
+                }
+
                 /* trips and pair (full house) with non-playing pair */
                 return FULL_HOUSE | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[ranks ^ i] << _RANK_SHIFT_3);
 
@@ -1369,17 +1589,23 @@ internal static class BrecherHandEval
                 if (NbrOfRanks[i] == 1)
                 {
                     /* three pair and singleton */
-                    j = HiUpTo5Ranks[ranks ^ i];    /* ranks of the three pairs */
-                    return TWO_PAIR | ((j & 0x0FF0) << _RANK_SHIFT_2) | (HiRank[i | (1 << (j & 0x000F))] << _RANK_SHIFT_2);
+                    j = HiUpTo5Ranks[ranks ^ i]; /* ranks of the three pairs */
+                    return TWO_PAIR | ((j & 0x0FF0) << _RANK_SHIFT_2) |
+                           (HiRank[i | (1 << (j & 0x000F))] << _RANK_SHIFT_2);
                 }
+
                 if ((j = c & d & h & s) == 0)
                 {
                     // trips and pair (full house) and two non-playing singletons
                     i ^= ranks; /* bit for the pair */
-                    if ((j = (c & d) & (~i)) == 0)
-                        j = (h & s) & (~i); /* bit for the trips */
+                    if ((j = c & d & ~i) == 0)
+                    {
+                        j = h & s & ~i; /* bit for the trips */
+                    }
+
                     return FULL_HOUSE | (HiRank[j] << _RANK_SHIFT_4) | (HiRank[i] << _RANK_SHIFT_3);
                 }
+
                 // quads with singleton kicker and two non-playing singletons
                 return FOUR_OF_A_KIND | (HiRank[j] << _RANK_SHIFT_4) | (HiRank[i] << _RANK_SHIFT_3);
 
@@ -1390,14 +1616,23 @@ internal static class BrecherHandEval
                  * or trips and four singletons
                  */
                 if ((i = FlushAndOrStraight7(ranks, c, d, h, s)) != 0)
+                {
                     return i;
+                }
+
                 i = c ^ d ^ h ^ s; // the bits of the trips, if any, and singletons
                 if (NbrOfRanks[i] != 5)
                     /* two pair and three singletons */
+                {
                     return TWO_PAIR | (HiUpTo5Ranks[i ^ ranks] << _RANK_SHIFT_3) | (HiRank[i] << _RANK_SHIFT_2);
+                }
+
                 /* trips and four singletons */
                 if ((j = c & d) == 0)
+                {
                     j = h & s;
+                }
+
                 // j has trips bit
                 return THREE_OF_A_KIND | (HiRank[j] << _RANK_SHIFT_4) | (HiUpTo5Ranks[i ^ j] & 0x0FF00);
 
@@ -1407,7 +1642,10 @@ internal static class BrecherHandEval
                  * or one pair and three kickers and two non-playing singletons
                  */
                 if ((i = FlushAndOrStraight7(ranks, c, d, h, s)) != 0)
+                {
                     return i;
+                }
+
                 i = c ^ d ^ h ^ s; /* the bits of the five singletons */
                 return PAIR | (HiRank[ranks ^ i] << _RANK_SHIFT_4) | ((HiUpTo5Ranks[i] & 0x0FFF00) >> _RANK_SHIFT_1);
 
@@ -1416,9 +1654,11 @@ internal static class BrecherHandEval
                  * flush and/or straight or no pair
                  */
                 if ((i = FlushAndOrStraight7(ranks, c, d, h, s)) != 0)
+                {
                     return i;
-                return NO_PAIR | HiUpTo5Ranks[ranks];
+                }
 
+                return NO_PAIR | HiUpTo5Ranks[ranks];
         } /* end switch */
 
         return 0; /* never reached, but avoids compiler warning */
@@ -1426,40 +1666,62 @@ internal static class BrecherHandEval
 
     private static int FlushAndOrStraight6(int ranks, int c, int d, int h, int s)
     {
-
         int i, j;
 
         if ((j = NbrOfRanks[c]) > 6 - 5)
         {
             // there's either a club flush or no flush
             if (j >= 5)
+            {
                 if ((i = StraightValue[c]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[c];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
-        else if ((j += (i = NbrOfRanks[d])) > 6 - 5)
+        else if ((j += i = NbrOfRanks[d]) > 6 - 5)
         {
             if (i >= 5)
+            {
                 if ((i = StraightValue[d]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[d];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
-        else if ((j += (i = NbrOfRanks[h])) > 6 - 5)
+        else if ((j += i = NbrOfRanks[h]) > 6 - 5)
         {
             if (i >= 5)
+            {
                 if ((i = StraightValue[h]) == 0)
+                {
                     return FLUSH | HiUpTo5Ranks[h];
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
+            }
         }
         else
-          /* total cards in other suits <= N-5: spade flush: */
-          if ((i = StraightValue[s]) == 0)
+            /* total cards in other suits <= N-5: spade flush: */
+        if ((i = StraightValue[s]) == 0)
+        {
             return FLUSH | HiUpTo5Ranks[s];
+        }
         else
-            return (STRAIGHT_FLUSH - STRAIGHT) + i;
+        {
+            return STRAIGHT_FLUSH - STRAIGHT + i;
+        }
+
         return StraightValue[ranks];
     }
 
@@ -1468,29 +1730,30 @@ internal static class BrecherHandEval
      * @param hand bit mask with one bit set for each of 6 cards.
      * @return the value of the best 5-card high poker hand.
      */
-    
+
     public static int Hand6Eval(long hand)
     {
+        int c = (int) hand & 0x1FFF;
+        int d = (int) ((ulong) hand >> 16) & 0x1FFF;
+        int h = (int) ((ulong) hand >> 32) & 0x1FFF;
+        int s = (int) ((ulong) hand >> 48) & 0x1FFF;
 
-        var c = (int)hand & 0x1FFF;
-        var d = (int)((ulong)hand >> 16) & 0x1FFF;
-        var h = (int)((ulong)hand >> 32) & 0x1FFF;
-        var s = (int)((ulong)hand >> 48) & 0x1FFF;
-
-        var ranks = c | d | h | s;
+        int ranks = c | d | h | s;
         int i;
 
         switch (NbrOfRanks[ranks])
         {
-
             case 2: /* quads with pair kicker,
 				   or two trips (full house) */
-                    /* bits for trips, if any: */
-                if ((NbrOfRanks[i = c ^ d ^ h ^ s]) != 0)
+                /* bits for trips, if any: */
+                if (NbrOfRanks[i = c ^ d ^ h ^ s] != 0)
                     /* two trips (full house) */
+                {
                     return FULL_HOUSE | (HiUpTo5Ranks[i] << _RANK_SHIFT_3);
+                }
+
                 /* quads with pair kicker */
-                i = c & d & h & s;  /* bit for quads */
+                i = c & d & h & s; /* bit for quads */
                 return FOUR_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[i ^ ranks] << _RANK_SHIFT_3);
 
             case 3: /* quads with singleton kicker and non-playing singleton,
@@ -1498,17 +1761,28 @@ internal static class BrecherHandEval
 				   or two pair with non-playing pair */
                 if ((c ^ d ^ h ^ s) == 0)
                     /* no trips or singletons:  three pair */
+                {
                     return TWO_PAIR | (HiUpTo5Ranks[ranks] << _RANK_SHIFT_2);
+                }
+
                 if ((i = c & d & h & s) == 0)
                 {
                     /* full house with singleton */
                     if ((i = c & d & h) == 0)
+                    {
                         if ((i = c & d & s) == 0)
+                        {
                             if ((i = c & h & s) == 0)
+                            {
                                 i = d & h & s; /* bit of trips */
-                    var j = c ^ d ^ h ^ s;
+                            }
+                        }
+                    }
+
+                    int j = c ^ d ^ h ^ s;
                     return FULL_HOUSE | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[j ^ ranks] << _RANK_SHIFT_3);
                 }
+
                 /* quads with kicker and singleton */
                 return FOUR_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[i ^ ranks] << _RANK_SHIFT_3);
 
@@ -1516,25 +1790,37 @@ internal static class BrecherHandEval
 				   or two pair and two singletons */
                 if ((i = c ^ d ^ h ^ s) != ranks)
                     /* two pair and two singletons */
+                {
                     return TWO_PAIR | (HiUpTo5Ranks[i ^ ranks] << _RANK_SHIFT_3) | (HiRank[i] << _RANK_SHIFT_2);
+                }
+
                 /* trips and three singletons */
                 if ((i = c & d) == 0)
+                {
                     i = h & s; /* bit of trips */
-                return THREE_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4) | ((HiUpTo5Ranks[ranks ^ i] & 0x00FF0) << _RANK_SHIFT_1);
+                }
+
+                return THREE_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4) |
+                       ((HiUpTo5Ranks[ranks ^ i] & 0x00FF0) << _RANK_SHIFT_1);
 
             case 5: /* flush and/or straight,
 				   or one pair and three kickers and
 					one non-playing singleton */
                 if ((i = FlushAndOrStraight6(ranks, c, d, h, s)) != 0)
+                {
                     return i;
+                }
+
                 i = c ^ d ^ h ^ s; /* the bits of the four singletons */
                 return PAIR | (HiRank[i ^ ranks] << _RANK_SHIFT_4) | (HiUpTo5Ranks[i] & 0x0FFF0);
 
             case 6: /* flush and/or straight or no pair */
                 if ((i = FlushAndOrStraight6(ranks, c, d, h, s)) != 0)
+                {
                     return i;
-                return NO_PAIR | HiUpTo5Ranks[ranks];
+                }
 
+                return NO_PAIR | HiUpTo5Ranks[ranks];
         } /* end switch */
 
         return 0; /* never reached, but avoids compiler warning */
@@ -1547,30 +1833,31 @@ internal static class BrecherHandEval
      */
     public static int Hand5Eval(long hand)
     {
+        int c = (int) hand & 0x1FFF;
+        int d = (int) ((ulong) hand >> 16) & 0x1FFF;
+        int h = (int) ((ulong) hand >> 32) & 0x1FFF;
+        int s = (int) ((ulong) hand >> 48) & 0x1FFF;
 
-        var c = (int)hand & 0x1FFF;
-        var d = (int)((ulong)hand >> 16) & 0x1FFF;
-        var h = (int)((ulong)hand >> 32) & 0x1FFF;
-        var s = (int)((ulong)hand >> 48) & 0x1FFF;
-
-        var ranks = c | d | h | s;
+        int ranks = c | d | h | s;
         int i;
 
         switch (NbrOfRanks[ranks])
         {
-
             case 2: /* quads or full house */
-                i = c & d;              /* any two suits */
+                i = c & d; /* any two suits */
                 if ((i & h & s) == 0)
-                { /* no bit common to all suits */
-                    i = c ^ d ^ h ^ s;  /* trips bit */
+                {
+                    /* no bit common to all suits */
+                    i = c ^ d ^ h ^ s; /* trips bit */
                     return FULL_HOUSE | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[i ^ ranks] << _RANK_SHIFT_3);
                 }
                 else
                     /* the quads bit must be present in each suit mask,
 	                   but the kicker bit in no more than one; so we need
 	                   only AND any two suit masks to get the quad bit: */
+                {
                     return FOUR_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4) | (HiRank[i ^ ranks] << _RANK_SHIFT_3);
+                }
 
             case 3: /* trips and two kickers,
 	               or two pair and kicker */
@@ -1578,11 +1865,17 @@ internal static class BrecherHandEval
                 {
                     /* trips and two kickers */
                     if ((i = c & d) == 0)
+                    {
                         if ((i = c & h) == 0)
+                        {
                             i = d & h;
+                        }
+                    }
+
                     return THREE_OF_A_KIND | (HiRank[i] << _RANK_SHIFT_4)
-                            | (HiUpTo5Ranks[i ^ ranks] << _RANK_SHIFT_2);
+                                           | (HiUpTo5Ranks[i ^ ranks] << _RANK_SHIFT_2);
                 }
+
                 /* two pair and kicker; i has kicker bit */
                 return TWO_PAIR | (HiUpTo5Ranks[i ^ ranks] << _RANK_SHIFT_3) | (HiRank[i] << _RANK_SHIFT_2);
 
@@ -1592,32 +1885,46 @@ internal static class BrecherHandEval
 
             case 5: /* flush and/or straight, or no pair */
                 if ((i = StraightValue[ranks]) == 0)
+                {
                     i = HiUpTo5Ranks[ranks];
+                }
+
                 if (c != 0)
-                {           /* if any clubs... */
-                    if (c != ranks)     /*   if no club flush... */
+                {
+                    /* if any clubs... */
+                    if (c != ranks) /*   if no club flush... */
+                    {
                         return i;
-                }       /*      return straight or no pair value */
-                else
-                if (d != 0)
+                    }
+                } /*      return straight or no pair value */
+                else if (d != 0)
                 {
                     if (d != ranks)
+                    {
                         return i;
+                    }
                 }
-                else
-                if (h != 0)
+                else if (h != 0)
                 {
                     if (h != ranks)
+                    {
                         return i;
+                    }
                 }
+
                 /*	else s == ranks: spade flush */
                 /* There is a flush */
                 if (i < STRAIGHT)
                     /* no straight */
+                {
                     return FLUSH | i;
+                }
                 else
-                    return (STRAIGHT_FLUSH - STRAIGHT) + i;
+                {
+                    return STRAIGHT_FLUSH - STRAIGHT + i;
+                }
         }
+
         return 0; /* never reached, but avoids compiler warning */
     }
     /** ********** Initialization ********************** */
@@ -1633,18 +1940,22 @@ internal static class BrecherHandEval
         for (mask = 1; mask < _ARRAY_SIZE; ++mask)
         {
             int ranks;
-            var bitCount = ranks = 0;
-            var shiftReg = mask;
+            int bitCount = ranks = 0;
+            int shiftReg = mask;
             int i;
             for (i = ACE_RANK - 2; i >= 0; --i, shiftReg <<= 1)
                 if ((shiftReg & 0x1000) != 0)
+                {
                     if (++bitCount <= 5)
                     {
                         ranks <<= _RANK_SHIFT_1;
                         ranks += i;
                         if (bitCount == 1)
+                        {
                             HiRank[mask] = i;
+                        }
                     }
+                }
 
             HiUpTo5Ranks[mask] = ranks;
             NbrOfRanks[mask] = bitCount;
@@ -1657,9 +1968,12 @@ internal static class BrecherHandEval
             for (i = 0; i < 8; ++i, shiftReg >>= 1)
                 if ((shiftReg & 1) != 0)
                 {
-                    value |= (1 << i); /* undo previous shifts, copy bit */
+                    value |= 1 << i; /* undo previous shifts, copy bit */
                     if (++bitCount == 3)
+                    {
                         Lo3_8ObRanksMask[mask] = value;
+                    }
+
                     if (bitCount == 5)
                     {
                         LoMaskOrNo8Low[mask] = value;
@@ -1682,12 +1996,19 @@ internal static class BrecherHandEval
         for (i = 0x1000; i > 0; i >>= 1)
         for (j = 0x1000; j > 0; j >>= 1)
         {
-            var es = ts | i | j;
+            int es = ts | i | j;
             if (StraightValue[es] == 0)
+            {
                 if (ts == A5432)
+                {
                     StraightValue[es] = STRAIGHT | ((5 - 2) << _RANK_SHIFT_4);
+                }
                 else
+                {
                     StraightValue[es] = STRAIGHT | (HiRank[ts] << _RANK_SHIFT_4);
+                }
+            }
         }
     }
 }
+
