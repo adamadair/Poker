@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HackerRank", "HackerRank\Ha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TexasHoldemBot", "TexasHoldemBot\TexasHoldemBot.csproj", "{866C9AB1-179B-4871-B649-25335390B62F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CodinGame", "CodinGame\CodinGame.csproj", "{70199619-B524-4721-906E-8A2855B648FE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{866C9AB1-179B-4871-B649-25335390B62F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{866C9AB1-179B-4871-B649-25335390B62F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{866C9AB1-179B-4871-B649-25335390B62F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{70199619-B524-4721-906E-8A2855B648FE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{70199619-B524-4721-906E-8A2855B648FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{70199619-B524-4721-906E-8A2855B648FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{70199619-B524-4721-906E-8A2855B648FE}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
