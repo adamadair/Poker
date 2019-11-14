@@ -46,29 +46,7 @@ namespace CodinGameTests
         }
 
 
-        /*
-         * These are tests that actually FAILED in competition. So, fuck!
-         *  5H 2D
-            8D 5D
-            5C 5S AS QD 9C
-         */
-        [Test]
-        public void ComparerTest()
-        {
-            var tests = new List<Tuple<string, string, int>>
-            {
-                new Tuple<string, string, int>("5H 5S 2C AC AH 2H 9C", "6D 6H 2C AC AH 2H 9C", -1),
-                new Tuple<string, string, int>("5H 2D 5C 5S AS QD 9C", "8D 5D 5C 5S AS QD 9C", 0)
-            };
-            var hc = new HandComparer(new BrecherHandEvaluator());
 
-            foreach (var tuple in tests)
-            {
-                var h1 = new Hand(tuple.Item1);
-                var h2 = new Hand(tuple.Item2);
-                Assert.AreEqual(tuple.Item3, hc.Compare(h1,h2));
-            }
-        }
 
         [Test]
         public void NewHandComparerTest()
